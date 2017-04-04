@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
-	"strconv"
 	"strings"
 )
 
@@ -53,13 +52,13 @@ func quartilePoints(buckets []byte) (q1, q2, q3 byte) {
 	return sortedBuckets[64], sortedBuckets[128], sortedBuckets[192]
 }
 
-func makeHash(buckets []byte, q1, q2, q3 byte) {
+func makeHash(buckets []byte, q1, q2, q3 byte) string {
 	biHash := make([]string, 32)
-	var h uint64
-	var i uint64
+	var i uint
 	for i < 31 {
+		var h uint
 		i++
-		var j uint64
+		var j uint
 		for j < 4 {
 			j++
 			k := buckets[4*i+j]
@@ -71,9 +70,10 @@ func makeHash(buckets []byte, q1, q2, q3 byte) {
 				h += 1 << (j * 2)
 			}
 		}
-		biHash[i] = strconv.FormatUint(h, 16)
+		fmt.Println(h)
+		//biHash[i] = strconv.FormatUint(h, 32)
 	}
-	fmt.Println(strings.Join(biHash, ""))
+	return strings.Join(biHash, "")
 }
 
 //Hash calculates the TLSH for the input file
@@ -101,19 +101,7 @@ func Hash(filename string) (hash string, err error) {
 	fmt.Println(q1Ratio, q2Ratio)
 	//checksum := pearsonHash(triplet, table)
 
-	strHash := ""
-	for i := 0; i < 127; i++ {
-		if buckets[i] < q1 {
-			strHash += "00"
-		} else if buckets[i] < q2 {
-			strHash += "01"
-		} else if buckets[i] < q3 {
-			strHash += "10"
-		} else {
-			strHash += "11"
-		}
-	}
-
+	strHash := makeHash(buckets, q1, q2, q3)
 	fmt.Println(strHash)
 	return
 }
