@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"strconv"
 	"strings"
 )
 
@@ -53,27 +54,23 @@ func quartilePoints(buckets []byte) (q1, q2, q3 byte) {
 }
 
 func makeHash(buckets []byte, q1, q2, q3 byte) string {
-	biHash := make([]string, 32)
-	var i uint
-	for i < 31 {
+	var biHash string
+	for i := 0; i < 31; i++ {
 		var h uint
-		i++
-		var j uint
-		for j < 4 {
-			j++
+		for j := 0; j < 4; j++ {
 			k := buckets[4*i+j]
 			if q3 < k {
-				h += 3 << (j * 2)
+				h += 3 << (uint(j) * 2)
 			} else if q2 < k {
-				h += 2 << (j * 2)
+				h += 2 << (uint(j) * 2)
 			} else if q1 < k {
-				h += 1 << (j * 2)
+				h += 1 << (uint(j) * 2)
 			}
 		}
-		fmt.Println(h)
-		//biHash[i] = strconv.FormatUint(h, 32)
+		//h = h % 255
+		biHash += strings.ToUpper(strconv.FormatInt(int64(h), 16))
 	}
-	return strings.Join(biHash, "")
+	return biHash
 }
 
 //Hash calculates the TLSH for the input file
