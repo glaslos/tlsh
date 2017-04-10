@@ -3,7 +3,6 @@ package tlsh
 import (
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"strconv"
 	"strings"
 )
@@ -20,37 +19,21 @@ func getTriplets(slice []byte) (triplets [][]byte) {
 	triplets = [][]byte{
 		{slice[0], slice[1], slice[2]},
 		{slice[0], slice[1], slice[3]},
-		{slice[0], slice[1], slice[4]},
 		{slice[0], slice[2], slice[3]},
 		{slice[0], slice[2], slice[4]},
+		{slice[0], slice[1], slice[4]},
 		{slice[0], slice[3], slice[4]},
 	}
 	return triplets
 }
 
-func mappingTable() (table []byte) {
-	table = make([]byte, 256)
-	for i := 0; i <= 255; i++ {
-		table[i] = byte(i)
-	}
-	for i := range table {
-		j := rand.Intn(i + 1)
-		table[i], table[j] = table[j], table[i]
-	}
-	return
-}
-
-func pearsonHash(keys []byte, table []byte) (h byte) {
-	for _, c := range keys {
-		h = table[h^c]
-	}
-	return
-}
-
 func quartilePoints(buckets []byte) (q1, q2, q3 byte) {
-	sortedBuckets := SortByteArray(buckets)
+	buckets2 := make([]byte, 256)
+	copy(buckets2, buckets)
+	sortedBuckets := SortByteArray(buckets2)
 	// 75%, 50% and 25%
-	return sortedBuckets[64], sortedBuckets[128], sortedBuckets[192]
+	// TODO: Why 128?
+	return sortedBuckets[(128/4)-1], sortedBuckets[(128/2)-1], sortedBuckets[128-(128/4)-1]
 }
 
 func makeHash(buckets []byte, q1, q2, q3 byte) string {
@@ -67,7 +50,6 @@ func makeHash(buckets []byte, q1, q2, q3 byte) string {
 				h += 1 << (uint(j) * 2)
 			}
 		}
-		//h = h % 255
 		biHash += strings.ToUpper(strconv.FormatInt(int64(h), 16))
 	}
 	return biHash
@@ -75,7 +57,6 @@ func makeHash(buckets []byte, q1, q2, q3 byte) string {
 
 //Hash calculates the TLSH for the input file
 func Hash(filename string) (hash string, err error) {
-	table := mappingTable()
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return
@@ -86,17 +67,17 @@ func Hash(filename string) (hash string, err error) {
 		chunk := data[sw : sw+windowLength]
 		sw += windowLength
 		triplets := getTriplets(chunk)
-		for _, triplet := range triplets {
-			buckets[pearsonHash(triplet, table)]++
+		salt := []byte{2, 3, 5, 7, 11, 13}
+		for i, triplet := range triplets {
+			buckets[pearsonHash(salt[i], triplet)]++
 		}
 	}
-	buckets2 := make([]byte, 256)
-	copy(buckets2, buckets)
-	q1, q2, q3 := quartilePoints(buckets2)
+	q1, q2, q3 := quartilePoints(buckets)
 	q1Ratio := (q1 * 100 / q3) % 16
 	q2Ratio := (q2 * 100 / q3) % 16
 	fmt.Println(q1Ratio, q2Ratio)
-	//checksum := pearsonHash(triplet, table)
+	//checksum := pearsonHash(0, triplet)
+	//fmt.Println(checksum)
 
 	strHash := makeHash(buckets, q1, q2, q3)
 	fmt.Println(strHash)
