@@ -28,11 +28,10 @@ func getTriplets(slice []byte) (triplets [][]byte) {
 }
 
 func quartilePoints(buckets []byte) (q1, q2, q3 byte) {
-	buckets2 := make([]byte, 256)
-	copy(buckets2, buckets)
+	buckets2 := make([]byte, 128)
+	copy(buckets2, buckets[:128])
 	sortedBuckets := SortByteArray(buckets2)
-	// 75%, 50% and 25%
-	// TODO: Why 128?
+	// 25%, 50% and 75%
 	return sortedBuckets[(128/4)-1], sortedBuckets[(128/2)-1], sortedBuckets[128-(128/4)-1]
 }
 
@@ -72,7 +71,7 @@ func Hash(filename string) (hash string, err error) {
 			buckets[pearsonHash(salt[i], triplet)]++
 		}
 	}
-	q1, q2, q3 := quartilePoints(buckets)
+	q1, q2, q3 := quartilePoints(buckets[:128])
 	q1Ratio := (q1 * 100 / q3) % 16
 	q2Ratio := (q2 * 100 / q3) % 16
 	fmt.Println(q1Ratio, q2Ratio)
