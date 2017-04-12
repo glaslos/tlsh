@@ -8,6 +8,9 @@ import (
 )
 
 var windowLength = 5
+var effBuckets = 256
+var codeSize = 64
+var numBuckets = 256
 
 // LSH holds the hash components
 type LSH struct {
@@ -28,11 +31,11 @@ func getTriplets(slice []byte) (triplets [][]byte) {
 }
 
 func quartilePoints(buckets []byte) (q1, q2, q3 byte) {
-	buckets2 := make([]byte, 128)
-	copy(buckets2, buckets[:128])
+	buckets2 := make([]byte, effBuckets)
+	copy(buckets2, buckets[:effBuckets])
 	sortedBuckets := SortByteArray(buckets2)
 	// 25%, 50% and 75%
-	return sortedBuckets[(128/4)-1], sortedBuckets[(128/2)-1], sortedBuckets[128-(128/4)-1]
+	return sortedBuckets[(effBuckets/4)-1], sortedBuckets[(effBuckets/2)-1], sortedBuckets[effBuckets-(effBuckets/4)-1]
 }
 
 func makeHash(buckets []byte, q1, q2, q3 byte) string {
@@ -60,18 +63,19 @@ func Hash(filename string) (hash string, err error) {
 	if err != nil {
 		return
 	}
-	buckets := make([]byte, 256)
+	buckets := make([]byte, numBuckets)
 	sw := 0
 	for sw <= len(data)-windowLength {
 		chunk := data[sw : sw+windowLength]
-		sw += windowLength
+		sw++
 		triplets := getTriplets(chunk)
 		salt := []byte{2, 3, 5, 7, 11, 13}
 		for i, triplet := range triplets {
 			buckets[pearsonHash(salt[i], triplet)]++
 		}
 	}
-	q1, q2, q3 := quartilePoints(buckets[:128])
+	q1, q2, q3 := quartilePoints(buckets)
+	fmt.Println(q1, q2, q3)
 	q1Ratio := (q1 * 100 / q3) % 16
 	q2Ratio := (q2 * 100 / q3) % 16
 	fmt.Println(q1Ratio, q2Ratio)
