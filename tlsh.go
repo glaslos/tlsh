@@ -2,7 +2,14 @@ package tlsh
 
 import (
 	"fmt"
+	"math"
 	"io/ioutil"
+)
+
+const (
+	LOG_1_5 = 0.4054651
+	LOG_1_3 = 0.26236426
+	LOG_1_1 = 0.095310180
 )
 
 var windowLength = 5
@@ -34,6 +41,28 @@ func quartilePoints(buckets []byte) (q1, q2, q3 byte) {
 	sortedBuckets := SortByteArray(buckets2)
 	// 25%, 50% and 75%
 	return sortedBuckets[(effBuckets/4)-1], sortedBuckets[(effBuckets/2)-1], sortedBuckets[effBuckets-(effBuckets/4)-1]
+}
+
+func lValue(length int) uint {
+	var l uint
+
+	if length <= 656 {
+		l = uint(math.Floor(math.Log(float64(length)) / LOG_1_5))
+	} else if length <= 3199 {
+		l = uint(math.Floor(math.Log(float64(length)) / LOG_1_3 - 8.72777))
+	} else {
+		l = uint(math.Floor(math.Log(float64(length)) / LOG_1_1 - 62.5472))
+	}
+
+	return l % 256
+}
+
+func swapByte(in uint) uint {
+	var out uint
+	out = ((in & 0xF0) >> 4 ) & 0x0F
+	out |= ((in & 0x0F) << 4 ) & 0xF0
+
+	return out
 }
 
 func makeHash(buckets []byte, q1, q2, q3 byte) []uint {
@@ -83,12 +112,14 @@ func Hash(filename string) (hash string, err error) {
 	fmt.Println(q1, q2, q3)
 	q1Ratio := (q1 * 100 / q3) % 16
 	q2Ratio := (q2 * 100 / q3) % 16
+	lValue := lValue(len(data))
 	fmt.Println(q1Ratio, q2Ratio)
 	//checksum := pearsonHash(0, triplet)
 	//fmt.Println(checksum)
 
 	biHash := makeHash(buckets, q1, q2, q3)
 
+	fmt.Printf("\nL=%02X\n", swapByte(lValue))
 	for i := 0; i < len(biHash); i++ {
 		hash += fmt.Sprintf("%02X", biHash[i])
 	}
