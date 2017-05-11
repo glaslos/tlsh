@@ -9,7 +9,7 @@ import (
 
 var windowLength = 5
 var effBuckets = 256
-var codeSize = 64
+var codeSize = 32
 var numBuckets = 256
 
 // LSH holds the hash components
@@ -40,7 +40,7 @@ func quartilePoints(buckets []byte) (q1, q2, q3 byte) {
 
 func makeHash(buckets []byte, q1, q2, q3 byte) string {
 	var biHash string
-	for i := 0; i < 31; i++ {
+	for i := 0; i < codeSize; i++ {
 		var h uint
 		for j := 0; j < 4; j++ {
 			k := buckets[4*i+j]
