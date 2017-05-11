@@ -89,5 +89,9 @@ func Hash(filename string) (hash string, err error) {
 
 	biHash := makeHash(buckets, q1, q2, q3)
 
-	return
+	for i := 0; i < len(biHash); i++ {
+		hash += fmt.Sprintf("%02X", biHash[i])
+	}
+
+	return hash, nil
 }
