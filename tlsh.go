@@ -3,8 +3,6 @@ package tlsh
 import (
 	"fmt"
 	"io/ioutil"
-	"strconv"
-	"strings"
 )
 
 var windowLength = 5
@@ -38,8 +36,9 @@ func quartilePoints(buckets []byte) (q1, q2, q3 byte) {
 	return sortedBuckets[(effBuckets/4)-1], sortedBuckets[(effBuckets/2)-1], sortedBuckets[effBuckets-(effBuckets/4)-1]
 }
 
-func makeHash(buckets []byte, q1, q2, q3 byte) string {
-	var biHash string
+func makeHash(buckets []byte, q1, q2, q3 byte) []uint {
+	var biHash []uint
+
 	for i := 0; i < codeSize; i++ {
 		var h uint
 		for j := 0; j < 4; j++ {
@@ -52,8 +51,9 @@ func makeHash(buckets []byte, q1, q2, q3 byte) string {
 				h += 1 << (uint(j) * 2)
 			}
 		}
-		biHash += strings.ToUpper(strconv.FormatInt(int64(h), 16))
+		biHash = append([]uint{h}, biHash...)
 	}
+
 	return biHash
 }
 
@@ -82,7 +82,7 @@ func Hash(filename string) (hash string, err error) {
 	//checksum := pearsonHash(0, triplet)
 	//fmt.Println(checksum)
 
-	strHash := makeHash(buckets, q1, q2, q3)
-	fmt.Println(strHash)
+	biHash := makeHash(buckets, q1, q2, q3)
+
 	return
 }
