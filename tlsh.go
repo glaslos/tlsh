@@ -64,9 +64,14 @@ func Hash(filename string) (hash string, err error) {
 		return
 	}
 	buckets := make([]byte, numBuckets)
+	chunk := make([]byte, windowLength)
 	sw := 0
 	for sw <= len(data)-windowLength {
-		chunk := data[sw : sw+windowLength]
+
+		for j, x := sw+windowLength-1, 0; j >= sw; j, x = j-1, x+1 {
+			chunk[x] = data[j]
+		}
+
 		sw++
 		triplets := getTriplets(chunk)
 		salt := []byte{2, 3, 5, 7, 11, 13}
