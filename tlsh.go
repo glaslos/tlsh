@@ -96,6 +96,7 @@ func Hash(filename string) (hash string, err error) {
 	chunk := make([]byte, windowLength)
 	salt := []byte{2, 3, 5, 7, 11, 13}
 	sw := 0
+	checksum := byte(0)
 
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -111,6 +112,9 @@ func Hash(filename string) (hash string, err error) {
 		sw++
 		triplets := getTriplets(chunk)
 
+		checksumTriplet := []byte{chunk[0], chunk[1], checksum}
+		checksum = pearsonHash(0, checksumTriplet)
+
 		for i, triplet := range triplets {
 			buckets[pearsonHash(salt[i], triplet)]++
 		}
@@ -121,6 +125,7 @@ func Hash(filename string) (hash string, err error) {
 	lValue := lValue(len(data))
 	biHash := makeHash(buckets, q1, q2, q3)
 
+	fmt.Printf("checksum=%02X\n", swapByte(uint(checksum)))
 	fmt.Printf("L=%02X\n", swapByte(lValue))
 	fmt.Printf("q1Ratio=%X, q2Ratio=%x\n", q1Ratio, q2Ratio)
 
