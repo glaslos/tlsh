@@ -45,22 +45,22 @@ func quartilePoints(buckets []byte) (q1, q2, q3 byte) {
 	return sortedBuckets[(effBuckets/4)-1], sortedBuckets[(effBuckets/2)-1], sortedBuckets[effBuckets-(effBuckets/4)-1]
 }
 
-func lValue(length int) uint {
-	var l uint
+func lValue(length int) byte {
+	var l byte
 
 	if length <= 656 {
-		l = uint(math.Floor(math.Log(float64(length)) / LOG_1_5))
+		l = byte(math.Floor(math.Log(float64(length)) / LOG_1_5))
 	} else if length <= 3199 {
-		l = uint(math.Floor(math.Log(float64(length))/LOG_1_3 - 8.72777))
+		l = byte(math.Floor(math.Log(float64(length))/LOG_1_3 - 8.72777))
 	} else {
-		l = uint(math.Floor(math.Log(float64(length))/LOG_1_1 - 62.5472))
+		l = byte(math.Floor(math.Log(float64(length))/LOG_1_1 - 62.5472))
 	}
 
-	return l % 256
+	return l % 255
 }
 
-func swapByte(in uint) uint {
-	var out uint
+func swapByte(in byte) byte {
+	var out byte
 
 	out = ((in & 0xF0) >> 4) & 0x0F
 	out |= ((in & 0x0F) << 4) & 0xF0
@@ -68,22 +68,22 @@ func swapByte(in uint) uint {
 	return out
 }
 
-func makeHash(buckets []byte, q1, q2, q3 byte) []uint {
-	var biHash []uint
+func makeHash(buckets []byte, q1, q2, q3 byte) []byte {
+	var biHash []byte
 
 	for i := 0; i < codeSize; i++ {
-		var h uint
+		var h byte
 		for j := 0; j < 4; j++ {
 			k := buckets[4*i+j]
 			if q3 < k {
-				h += 3 << (uint(j) * 2)
+				h += 3 << (byte(j) * 2)
 			} else if q2 < k {
-				h += 2 << (uint(j) * 2)
+				h += 2 << (byte(j) * 2)
 			} else if q1 < k {
-				h += 1 << (uint(j) * 2)
+				h += 1 << (byte(j) * 2)
 			}
 		}
-		biHash = append([]uint{h}, biHash...)
+		biHash = append([]byte{h}, biHash...)
 	}
 
 	return biHash
@@ -125,7 +125,7 @@ func Hash(filename string) (hash string, err error) {
 	lValue := lValue(len(data))
 	biHash := makeHash(buckets, q1, q2, q3)
 
-	fmt.Printf("checksum=%02X\n", swapByte(uint(checksum)))
+	fmt.Printf("checksum=%02X\n", swapByte(checksum))
 	fmt.Printf("L=%02X\n", swapByte(lValue))
 	fmt.Printf("q1Ratio=%X, q2Ratio=%x\n", q1Ratio, q2Ratio)
 
