@@ -14,7 +14,7 @@ const (
 
 var (
 	windowLength = 5
-	effBuckets   = 256
+	effBuckets   = 128
 	codeSize     = 32
 	numBuckets   = 256
 )
