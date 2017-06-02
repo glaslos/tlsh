@@ -38,11 +38,117 @@ func getTriplets(slice []byte) (triplets [][]byte) {
 }
 
 func quartilePoints(buckets []byte) (q1, q2, q3 byte) {
-	buckets2 := make([]byte, effBuckets)
-	copy(buckets2, buckets[:effBuckets])
-	sortedBuckets := SortByteArray(buckets2)
-	// 25%, 50% and 75%
-	return sortedBuckets[(effBuckets/4)-1], sortedBuckets[(effBuckets/2)-1], sortedBuckets[effBuckets-(effBuckets/4)-1]
+	var spl, spr byte
+	var p1 byte = byte(effBuckets/4 - 1)
+	var p2 byte = byte(effBuckets/2 - 1)
+	var p3 byte = byte(effBuckets - effBuckets/4 - 1)
+	var end byte = byte(effBuckets - 1)
+
+	bucket_copy := make([]byte, effBuckets)
+	copy(bucket_copy, buckets[:effBuckets])
+
+	short_cut_left := make([]byte, effBuckets)
+	short_cut_right := make([]byte, effBuckets)
+
+	for l, r := byte(0), end; ; {
+		ret := partition(&bucket_copy, l, r)
+		if ret > p2 {
+			r = ret - 1
+			short_cut_right[spr] = ret
+			spr++
+		} else if ret < p2 {
+			l = ret + 1
+			short_cut_left[spl] = ret
+			spl++
+		} else {
+			q2 = bucket_copy[p2]
+			break
+		}
+	}
+
+	short_cut_left[spl] = p2 - 1
+	short_cut_right[spr] = p2 + 1
+
+	for i, l := byte(0), byte(0); i <= spl; i++ {
+		r := short_cut_left[i]
+		if r > p1 {
+			for ; ; {
+				ret := partition(&bucket_copy, l, r)
+				if ret > p1 {
+					r = ret - 1
+				} else if ret < p1 {
+					l = ret + 1
+				} else {
+					q1 = bucket_copy[p1]
+					break
+				}
+			}
+			break
+		} else if r < p1 {
+			l = r
+		} else {
+			q1 = bucket_copy[p1]
+			break
+		}
+	}
+
+	for i, r := byte(0), end; i <= spr; i++ {
+		l := short_cut_right[i]
+		if l < p3 {
+			for ; ; {
+				ret := partition(&bucket_copy, l, r)
+				if ret > p3 {
+					r = ret - 1
+				} else if ret < p3 {
+					l = ret + 1
+				} else {
+					q3 = bucket_copy[p3]
+					break
+				}
+			}
+			break
+		} else if l > p3 {
+			r = l
+		} else {
+			q3 = bucket_copy[p3]
+			break
+		}
+	}
+
+	return q1, q2, q3
+}
+
+func partition(buf *[]byte, left, right byte) byte {
+
+	if left == right {
+		return left
+	}
+
+	if left + 1 == right {
+		if (*buf)[left] > (*buf)[right] {
+			(*buf)[right], (*buf)[left] = (*buf)[left], (*buf)[right]
+		}
+		return left
+	}
+
+	var ret byte = left
+	var pivot byte = (left + right) >> 1
+	var val byte = (*buf)[pivot]
+
+	(*buf)[pivot] = (*buf)[right]
+	(*buf)[right] = val
+
+	for i := left; i < right; i++ {
+		if ((*buf))[i] < val {
+			(*buf)[i], (*buf)[ret] = (*buf)[ret], (*buf)[i]
+			ret++
+		}
+	}
+
+	(*buf)[right] = (*buf)[ret]
+	(*buf)[ret] = val
+
+	return ret;
 }
 
 func lValue(length int) byte {
