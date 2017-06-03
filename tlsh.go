@@ -174,7 +174,7 @@ func swapByte(in byte) byte {
 	return out
 }
 
-func makeHash(buckets []byte, q1, q2, q3 byte) []byte {
+func bucketsBinaryRepresentation(buckets []byte, q1, q2, q3 byte) []byte {
 	var biHash []byte
 
 	for i := 0; i < codeSize; i++ {
@@ -193,6 +193,29 @@ func makeHash(buckets []byte, q1, q2, q3 byte) []byte {
 	}
 
 	return biHash
+}
+
+func hashTLSH(length int, buckets []byte, checksum, q1, q2, q3 byte) []byte {
+
+	// binary representation of buckets
+	biHash := bucketsBinaryRepresentation(buckets, q1, q2, q3)
+
+	q1Ratio := byte(float32(q1) * 100 / float32(q3)) % 16
+	q2Ratio := byte(float32(q2) * 100 / float32(q3)) % 16
+
+	qRatio := ((q1Ratio & 0xF) << 4) | (q2Ratio & 0xF)
+
+	// prepend header
+	return append([]byte{swapByte(checksum), swapByte(lValue(length)), qRatio}, biHash...)
+}
+
+func makeStringTLSH(biHash []byte) (hash string) {
+
+	for i := 0; i < len(biHash); i++ {
+		hash += fmt.Sprintf("%02X", biHash[i])
+	}
+
+	return
 }
 
 //Hash calculates the TLSH for the input file
@@ -226,18 +249,8 @@ func Hash(filename string) (hash string, err error) {
 		}
 	}
 	q1, q2, q3 := quartilePoints(buckets)
-	q1Ratio := (q1 * 100 / q3) % 16
-	q2Ratio := (q2 * 100 / q3) % 16
-	lValue := lValue(len(data))
-	biHash := makeHash(buckets, q1, q2, q3)
 
-	fmt.Printf("checksum=%02X\n", swapByte(checksum))
-	fmt.Printf("L=%02X\n", swapByte(lValue))
-	fmt.Printf("q1Ratio=%X, q2Ratio=%x\n", q1Ratio, q2Ratio)
-
-	for i := 0; i < len(biHash); i++ {
-		hash += fmt.Sprintf("%02X", biHash[i])
-	}
+	hash = makeStringTLSH(hashTLSH(len(data), buckets, checksum, q1, q2, q3))
 
 	return hash, nil
 }
