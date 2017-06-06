@@ -3,14 +3,21 @@ package tlsh
 import (
 	"fmt"
 	"io/ioutil"
-	"strconv"
-	"strings"
+	"math"
 )
 
-var windowLength = 5
-var effBuckets = 256
-var codeSize = 64
-var numBuckets = 256
+const (
+	log1_5   = 0.4054651
+	log1_3   = 0.26236426
+	log1_1   = 0.095310180
+	codeSize = 32
+)
+
+var (
+	windowLength = 5
+	effBuckets   = 128
+	numBuckets   = 256
+)
 
 // LSH holds the hash components
 type LSH struct {
@@ -31,58 +38,219 @@ func getTriplets(slice []byte) (triplets [][]byte) {
 }
 
 func quartilePoints(buckets []byte) (q1, q2, q3 byte) {
-	buckets2 := make([]byte, effBuckets)
-	copy(buckets2, buckets[:effBuckets])
-	sortedBuckets := SortByteArray(buckets2)
-	// 25%, 50% and 75%
-	return sortedBuckets[(effBuckets/4)-1], sortedBuckets[(effBuckets/2)-1], sortedBuckets[effBuckets-(effBuckets/4)-1]
+	var spl, spr byte
+	var p1 = byte(effBuckets/4 - 1)
+	var p2 = byte(effBuckets/2 - 1)
+	var p3 = byte(effBuckets - effBuckets/4 - 1)
+	var end = byte(effBuckets - 1)
+
+	bucketCopy := make([]byte, effBuckets)
+	copy(bucketCopy, buckets[:effBuckets])
+
+	shortCutLeft := make([]byte, effBuckets)
+	shortCutRight := make([]byte, effBuckets)
+
+	for l, r := byte(0), end; ; {
+		ret := partition(&bucketCopy, l, r)
+		if ret > p2 {
+			r = ret - 1
+			shortCutRight[spr] = ret
+			spr++
+		} else if ret < p2 {
+			l = ret + 1
+			shortCutLeft[spl] = ret
+			spl++
+		} else {
+			q2 = bucketCopy[p2]
+			break
+		}
+	}
+
+	shortCutLeft[spl] = p2 - 1
+	shortCutRight[spr] = p2 + 1
+
+	for i, l := byte(0), byte(0); i <= spl; i++ {
+		r := shortCutLeft[i]
+		if r > p1 {
+			for {
+				ret := partition(&bucketCopy, l, r)
+				if ret > p1 {
+					r = ret - 1
+				} else if ret < p1 {
+					l = ret + 1
+				} else {
+					q1 = bucketCopy[p1]
+					break
+				}
+			}
+			break
+		} else if r < p1 {
+			l = r
+		} else {
+			q1 = bucketCopy[p1]
+			break
+		}
+	}
+
+	for i, r := byte(0), end; i <= spr; i++ {
+		l := shortCutRight[i]
+		if l < p3 {
+			for {
+				ret := partition(&bucketCopy, l, r)
+				if ret > p3 {
+					r = ret - 1
+				} else if ret < p3 {
+					l = ret + 1
+				} else {
+					q3 = bucketCopy[p3]
+					break
+				}
+			}
+			break
+		} else if l > p3 {
+			r = l
+		} else {
+			q3 = bucketCopy[p3]
+			break
+		}
+	}
+
+	return q1, q2, q3
 }
 
-func makeHash(buckets []byte, q1, q2, q3 byte) string {
-	var biHash string
-	for i := 0; i < 31; i++ {
-		var h uint
+func partition(buf *[]byte, left, right byte) byte {
+
+	if left == right {
+		return left
+	}
+
+	if left+1 == right {
+		if (*buf)[left] > (*buf)[right] {
+			(*buf)[right], (*buf)[left] = (*buf)[left], (*buf)[right]
+		}
+		return left
+	}
+
+	var ret = left
+	var pivot = (left + right) >> 1
+	var val = (*buf)[pivot]
+
+	(*buf)[pivot] = (*buf)[right]
+	(*buf)[right] = val
+
+	for i := left; i < right; i++ {
+		if (*buf)[i] < val {
+			(*buf)[i], (*buf)[ret] = (*buf)[ret], (*buf)[i]
+			ret++
+		}
+	}
+
+	(*buf)[right] = (*buf)[ret]
+	(*buf)[ret] = val
+
+	return ret
+}
+
+func lValue(length int) byte {
+	var l byte
+
+	if length <= 656 {
+		l = byte(math.Floor(math.Log(float64(length)) / log1_5))
+	} else if length <= 3199 {
+		l = byte(math.Floor(math.Log(float64(length))/log1_3 - 8.72777))
+	} else {
+		l = byte(math.Floor(math.Log(float64(length))/log1_1 - 62.5472))
+	}
+
+	return l % 255
+}
+
+func swapByte(in byte) byte {
+	var out byte
+
+	out = ((in & 0xF0) >> 4) & 0x0F
+	out |= ((in & 0x0F) << 4) & 0xF0
+
+	return out
+}
+
+func bucketsBinaryRepresentation(buckets []byte, q1, q2, q3 byte) [codeSize]byte {
+	var biHash [codeSize]byte
+
+	for i := 0; i < codeSize; i++ {
+		var h byte
 		for j := 0; j < 4; j++ {
 			k := buckets[4*i+j]
 			if q3 < k {
-				h += 3 << (uint(j) * 2)
+				h += 3 << (byte(j) * 2)
 			} else if q2 < k {
-				h += 2 << (uint(j) * 2)
+				h += 2 << (byte(j) * 2)
 			} else if q1 < k {
-				h += 1 << (uint(j) * 2)
+				h += 1 << (byte(j) * 2)
 			}
 		}
-		biHash += strings.ToUpper(strconv.FormatInt(int64(h), 16))
+		// Prepend the new h to the hash
+		biHash[(codeSize-1)-i] = h
 	}
 	return biHash
 }
 
+func hashTLSH(length int, buckets []byte, checksum, q1, q2, q3 byte) []byte {
+
+	// binary representation of buckets
+	biHash := bucketsBinaryRepresentation(buckets, q1, q2, q3)
+
+	q1Ratio := byte(float32(q1)*100/float32(q3)) % 16
+	q2Ratio := byte(float32(q2)*100/float32(q3)) % 16
+
+	qRatio := ((q1Ratio & 0xF) << 4) | (q2Ratio & 0xF)
+
+	// prepend header
+	return append([]byte{swapByte(checksum), swapByte(lValue(length)), qRatio}, biHash[:]...)
+}
+
+func makeStringTLSH(biHash []byte) (hash string) {
+
+	for i := 0; i < len(biHash); i++ {
+		hash += fmt.Sprintf("%02X", biHash[i])
+	}
+
+	return
+}
+
 //Hash calculates the TLSH for the input file
 func Hash(filename string) (hash string, err error) {
+
+	buckets := make([]byte, numBuckets)
+	chunk := make([]byte, windowLength)
+	salt := []byte{2, 3, 5, 7, 11, 13}
+	sw := 0
+	checksum := byte(0)
+
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return
 	}
-	buckets := make([]byte, numBuckets)
-	sw := 0
+
 	for sw <= len(data)-windowLength {
-		chunk := data[sw : sw+windowLength]
+
+		for j, x := sw+windowLength-1, 0; j >= sw; j, x = j-1, x+1 {
+			chunk[x] = data[j]
+		}
+
 		sw++
 		triplets := getTriplets(chunk)
-		salt := []byte{2, 3, 5, 7, 11, 13}
+
+		checksumTriplet := []byte{chunk[0], chunk[1], checksum}
+		checksum = pearsonHash(0, checksumTriplet)
+
 		for i, triplet := range triplets {
 			buckets[pearsonHash(salt[i], triplet)]++
 		}
 	}
 	q1, q2, q3 := quartilePoints(buckets)
-	fmt.Println(q1, q2, q3)
-	q1Ratio := (q1 * 100 / q3) % 16
-	q2Ratio := (q2 * 100 / q3) % 16
-	fmt.Println(q1Ratio, q2Ratio)
-	//checksum := pearsonHash(0, triplet)
-	//fmt.Println(checksum)
 
-	strHash := makeHash(buckets, q1, q2, q3)
-	fmt.Println(strHash)
-	return
+	hash = makeStringTLSH(hashTLSH(len(data), buckets, checksum, q1, q2, q3))
+
+	return hash, nil
 }
