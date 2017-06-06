@@ -7,15 +7,15 @@ import (
 )
 
 const (
-	LOG_1_5 = 0.4054651
-	LOG_1_3 = 0.26236426
-	LOG_1_1 = 0.095310180
+	log1_5   = 0.4054651
+	log1_3   = 0.26236426
+	log1_1   = 0.095310180
+	codeSize = 32
 )
 
 var (
 	windowLength = 5
 	effBuckets   = 128
-	codeSize     = 32
 	numBuckets   = 256
 )
 
@@ -39,47 +39,47 @@ func getTriplets(slice []byte) (triplets [][]byte) {
 
 func quartilePoints(buckets []byte) (q1, q2, q3 byte) {
 	var spl, spr byte
-	var p1 byte = byte(effBuckets/4 - 1)
-	var p2 byte = byte(effBuckets/2 - 1)
-	var p3 byte = byte(effBuckets - effBuckets/4 - 1)
-	var end byte = byte(effBuckets - 1)
+	var p1 = byte(effBuckets/4 - 1)
+	var p2 = byte(effBuckets/2 - 1)
+	var p3 = byte(effBuckets - effBuckets/4 - 1)
+	var end = byte(effBuckets - 1)
 
-	bucket_copy := make([]byte, effBuckets)
-	copy(bucket_copy, buckets[:effBuckets])
+	bucketCopy := make([]byte, effBuckets)
+	copy(bucketCopy, buckets[:effBuckets])
 
-	short_cut_left := make([]byte, effBuckets)
-	short_cut_right := make([]byte, effBuckets)
+	shortCutLeft := make([]byte, effBuckets)
+	shortCutRight := make([]byte, effBuckets)
 
 	for l, r := byte(0), end; ; {
-		ret := partition(&bucket_copy, l, r)
+		ret := partition(&bucketCopy, l, r)
 		if ret > p2 {
 			r = ret - 1
-			short_cut_right[spr] = ret
+			shortCutRight[spr] = ret
 			spr++
 		} else if ret < p2 {
 			l = ret + 1
-			short_cut_left[spl] = ret
+			shortCutLeft[spl] = ret
 			spl++
 		} else {
-			q2 = bucket_copy[p2]
+			q2 = bucketCopy[p2]
 			break
 		}
 	}
 
-	short_cut_left[spl] = p2 - 1
-	short_cut_right[spr] = p2 + 1
+	shortCutLeft[spl] = p2 - 1
+	shortCutRight[spr] = p2 + 1
 
 	for i, l := byte(0), byte(0); i <= spl; i++ {
-		r := short_cut_left[i]
+		r := shortCutLeft[i]
 		if r > p1 {
-			for ; ; {
-				ret := partition(&bucket_copy, l, r)
+			for {
+				ret := partition(&bucketCopy, l, r)
 				if ret > p1 {
 					r = ret - 1
 				} else if ret < p1 {
 					l = ret + 1
 				} else {
-					q1 = bucket_copy[p1]
+					q1 = bucketCopy[p1]
 					break
 				}
 			}
@@ -87,22 +87,22 @@ func quartilePoints(buckets []byte) (q1, q2, q3 byte) {
 		} else if r < p1 {
 			l = r
 		} else {
-			q1 = bucket_copy[p1]
+			q1 = bucketCopy[p1]
 			break
 		}
 	}
 
 	for i, r := byte(0), end; i <= spr; i++ {
-		l := short_cut_right[i]
+		l := shortCutRight[i]
 		if l < p3 {
-			for ; ; {
-				ret := partition(&bucket_copy, l, r)
+			for {
+				ret := partition(&bucketCopy, l, r)
 				if ret > p3 {
 					r = ret - 1
 				} else if ret < p3 {
 					l = ret + 1
 				} else {
-					q3 = bucket_copy[p3]
+					q3 = bucketCopy[p3]
 					break
 				}
 			}
@@ -110,7 +110,7 @@ func quartilePoints(buckets []byte) (q1, q2, q3 byte) {
 		} else if l > p3 {
 			r = l
 		} else {
-			q3 = bucket_copy[p3]
+			q3 = bucketCopy[p3]
 			break
 		}
 	}
@@ -124,22 +124,22 @@ func partition(buf *[]byte, left, right byte) byte {
 		return left
 	}
 
-	if left + 1 == right {
+	if left+1 == right {
 		if (*buf)[left] > (*buf)[right] {
 			(*buf)[right], (*buf)[left] = (*buf)[left], (*buf)[right]
 		}
 		return left
 	}
 
-	var ret byte = left
-	var pivot byte = (left + right) >> 1
-	var val byte = (*buf)[pivot]
+	var ret = left
+	var pivot = (left + right) >> 1
+	var val = (*buf)[pivot]
 
 	(*buf)[pivot] = (*buf)[right]
 	(*buf)[right] = val
 
 	for i := left; i < right; i++ {
-		if ((*buf))[i] < val {
+		if (*buf)[i] < val {
 			(*buf)[i], (*buf)[ret] = (*buf)[ret], (*buf)[i]
 			ret++
 		}
@@ -148,18 +148,18 @@ func partition(buf *[]byte, left, right byte) byte {
 	(*buf)[right] = (*buf)[ret]
 	(*buf)[ret] = val
 
-	return ret;
+	return ret
 }
 
 func lValue(length int) byte {
 	var l byte
 
 	if length <= 656 {
-		l = byte(math.Floor(math.Log(float64(length)) / LOG_1_5))
+		l = byte(math.Floor(math.Log(float64(length)) / log1_5))
 	} else if length <= 3199 {
-		l = byte(math.Floor(math.Log(float64(length))/LOG_1_3 - 8.72777))
+		l = byte(math.Floor(math.Log(float64(length))/log1_3 - 8.72777))
 	} else {
-		l = byte(math.Floor(math.Log(float64(length))/LOG_1_1 - 62.5472))
+		l = byte(math.Floor(math.Log(float64(length))/log1_1 - 62.5472))
 	}
 
 	return l % 255
@@ -174,8 +174,8 @@ func swapByte(in byte) byte {
 	return out
 }
 
-func bucketsBinaryRepresentation(buckets []byte, q1, q2, q3 byte) []byte {
-	var biHash []byte
+func bucketsBinaryRepresentation(buckets []byte, q1, q2, q3 byte) [codeSize]byte {
+	var biHash [codeSize]byte
 
 	for i := 0; i < codeSize; i++ {
 		var h byte
@@ -189,9 +189,9 @@ func bucketsBinaryRepresentation(buckets []byte, q1, q2, q3 byte) []byte {
 				h += 1 << (byte(j) * 2)
 			}
 		}
-		biHash = append([]byte{h}, biHash...)
+		// Prepend the new h to the hash
+		biHash[(codeSize-1)-i] = h
 	}
-
 	return biHash
 }
 
@@ -200,13 +200,13 @@ func hashTLSH(length int, buckets []byte, checksum, q1, q2, q3 byte) []byte {
 	// binary representation of buckets
 	biHash := bucketsBinaryRepresentation(buckets, q1, q2, q3)
 
-	q1Ratio := byte(float32(q1) * 100 / float32(q3)) % 16
-	q2Ratio := byte(float32(q2) * 100 / float32(q3)) % 16
+	q1Ratio := byte(float32(q1)*100/float32(q3)) % 16
+	q2Ratio := byte(float32(q2)*100/float32(q3)) % 16
 
 	qRatio := ((q1Ratio & 0xF) << 4) | (q2Ratio & 0xF)
 
 	// prepend header
-	return append([]byte{swapByte(checksum), swapByte(lValue(length)), qRatio}, biHash...)
+	return append([]byte{swapByte(checksum), swapByte(lValue(length)), qRatio}, biHash[:]...)
 }
 
 func makeStringTLSH(biHash []byte) (hash string) {
