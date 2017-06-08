@@ -20,7 +20,7 @@ var vTable = [256]byte{
 	51, 65, 28, 144, 254, 221, 93, 189, 194, 139, 112, 43, 71, 109, 184, 209,
 }
 
-func pearsonHash(salt byte, keys []byte) (h byte) {
+func pearsonHash(salt byte, keys [3]byte) (h byte) {
 	h = vTable[h^salt]
 	for _, c := range keys {
 		h = vTable[h^c]
