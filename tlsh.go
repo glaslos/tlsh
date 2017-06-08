@@ -2,6 +2,7 @@ package tlsh
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"math"
@@ -274,6 +275,12 @@ func HashReader(r fuzzyReader) (hash string, err error) {
 	hash = makeStringTLSH(hashTLSH(fileSize, buckets, checksum, q1, q2, q3))
 
 	return hash, nil
+}
+
+//HashBytes calculates the TLSH for the input byte slice
+func HashBytes(blob []byte) (hash string, err error) {
+	r := bytes.NewReader(blob)
+	return HashReader(r)
 }
 
 //Hash calculates the TLSH for the input file
