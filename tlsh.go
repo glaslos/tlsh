@@ -1,9 +1,11 @@
 package tlsh
 
 import (
+	"bufio"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math"
+	"os"
 )
 
 const (
@@ -215,40 +217,72 @@ func makeStringTLSH(biHash []byte) (hash string) {
 	return
 }
 
-func fillBuckets(data []byte) (buckets [numBuckets]uint, checksum byte) {
-	chunk := [windowLength]byte{}
+func reverse(s [5]byte) [5]byte {
+	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
+		s[i], s[j] = s[j], s[i]
+	}
+	return s
+}
+
+func fillBuckets(r fuzzyReader) ([numBuckets]uint, byte, int, error) {
+	buckets := [numBuckets]uint{}
+	chunkSlice := make([]byte, windowLength)
+	chunk := [5]byte{}
 	salt := [6]byte{2, 3, 5, 7, 11, 13}
-	sw := 0
+	fileSize := 0
+	checksum := byte(0)
 
-	for sw <= len(data)-windowLength {
-
-		for j, x := sw+windowLength-1, 0; j >= sw; j, x = j-1, x+1 {
-			chunk[x] = data[j]
-		}
-
-		sw++
+	n, err := r.Read(chunkSlice)
+	if err != nil {
+		return [numBuckets]uint{}, 0, 0, err
+	}
+	copy(chunk[:], chunkSlice[0:5])
+	chunk = reverse(chunk)
+	fileSize += n
+	for {
 		triplets := getTriplets(chunk)
-
 		checksumTriplet := [3]byte{chunk[0], chunk[1], checksum}
 		checksum = pearsonHash(0, checksumTriplet)
-
 		for i, triplet := range triplets {
 			buckets[pearsonHash(salt[i], triplet)]++
 		}
+		copy(chunk[1:], chunk[0:4])
+		chunk[0], err = r.ReadByte()
+		if err != nil {
+			if err != io.EOF {
+				return [numBuckets]uint{}, 0, 0, err
+			}
+			break
+		}
+		fileSize++
 	}
-	return buckets, checksum
+	return buckets, checksum, fileSize, nil
+}
+
+type fuzzyReader interface {
+	Read([]byte) (int, error)
+	ReadByte() (byte, error)
+}
+
+//HashReader calculates the TLSH for the input reader
+func HashReader(r fuzzyReader) (hash string, err error) {
+	buckets, checksum, fileSize, err := fillBuckets(r)
+	if err != nil {
+		return
+	}
+	q1, q2, q3 := quartilePoints(buckets)
+	hash = makeStringTLSH(hashTLSH(fileSize, buckets, checksum, q1, q2, q3))
+
+	return hash, nil
 }
 
 //Hash calculates the TLSH for the input file
 func Hash(filename string) (hash string, err error) {
-	data, err := ioutil.ReadFile(filename)
+	f, err := os.Open(filename)
+	defer f.Close()
 	if err != nil {
 		return
 	}
-
-	buckets, checksum := fillBuckets(data)
-	q1, q2, q3 := quartilePoints(buckets)
-	hash = makeStringTLSH(hashTLSH(len(data), buckets, checksum, q1, q2, q3))
-
-	return hash, nil
+	r := bufio.NewReader(f)
+	return HashReader(r)
 }

@@ -1,8 +1,8 @@
 package tlsh
 
 import (
-	"fmt"
-	"io/ioutil"
+	"bufio"
+	"os"
 	"testing"
 )
 
@@ -25,12 +25,11 @@ var (
 
 func TestReal(t *testing.T) {
 	for _, tc := range testCases {
-		if bar, err := Hash(tc.filename); bar != tc.hash {
-			fmt.Printf("%s\n", bar)
+		if hash, err := Hash(tc.filename); hash != tc.hash {
 			if err != nil {
 				t.Error(err)
 			}
-			t.Errorf("\nfilename: %s\n%s\n%s - doesn't match real hash\n", tc.filename, tc.hash, bar)
+			t.Errorf("\nfilename: %s\n%s\n%s - doesn't match real hash\n", tc.filename, tc.hash, hash)
 		}
 	}
 }
@@ -44,21 +43,30 @@ func BenchmarkPearson(b *testing.B) {
 }
 
 func BenchmarkFillBuckets(b *testing.B) {
-	data, err := ioutil.ReadFile("tests/test_file_1")
+	f, err := os.Open("tests/test_file_1")
+	defer f.Close()
 	if err != nil {
 		b.Error(err)
 	}
+	f.Seek(0, 0)
 	for n := 0; n < b.N; n++ {
-		fillBuckets(data)
+		r := bufio.NewReader(f)
+		fillBuckets(r)
+		f.Seek(0, 0)
 	}
 }
 
 func BenchmarkQuartilePoints(b *testing.B) {
-	data, err := ioutil.ReadFile("tests/test_file_1")
+	f, err := os.Open("tests/test_file_1")
+	defer f.Close()
 	if err != nil {
 		b.Error(err)
 	}
-	buckets, _ := fillBuckets(data)
+	r := bufio.NewReader(f)
+	buckets, _, _, err := fillBuckets(r)
+	if err != nil {
+		b.Error(err)
+	}
 	for n := 0; n < b.N; n++ {
 		quartilePoints(buckets)
 	}

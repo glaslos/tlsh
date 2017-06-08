@@ -3,21 +3,29 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/glaslos/tlsh"
 )
 
 func main() {
+	var file = flag.String("f", "", "path to the file to be hashed")
+	var raw = flag.Bool("r", false, "set to get only the hash")
 	flag.Parse()
-	if len(flag.Args()) < 1 {
-		fmt.Println("Please provide a file path: ./tlsh /tmp/file")
+	if *file == "" {
+		fmt.Fprintf(os.Stderr, "Usage of %s [-f <file>]\n\n", os.Args[0])
+		flag.PrintDefaults()
+		fmt.Println()
 		return
 	}
-	fileName := flag.Args()[0]
-	hash, err := tlsh.Hash(fileName)
+	hash, err := tlsh.Hash(*file)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Printf("%s  %s\n", hash, fileName)
+	if *raw {
+		fmt.Println(hash)
+	} else {
+		fmt.Printf("%s  %s\n", hash, *file)
+	}
 }
