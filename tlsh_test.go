@@ -2,6 +2,7 @@ package tlsh
 
 import (
 	"fmt"
+	"io/ioutil"
 	"testing"
 )
 
@@ -22,9 +23,6 @@ var (
 	}
 )
 
-func TestSomething(t *testing.T) {
-}
-
 func TestReal(t *testing.T) {
 	for _, tc := range testCases {
 		if bar, err := Hash(tc.filename); bar != tc.hash {
@@ -34,5 +32,34 @@ func TestReal(t *testing.T) {
 			}
 			t.Errorf("\nfilename: %s\n%s\n%s - doesn't match real hash\n", tc.filename, tc.hash, bar)
 		}
+	}
+}
+
+func BenchmarkPearson(b *testing.B) {
+	var salt = byte(0)
+	var keys = []byte{1, 3, 7}
+	for n := 0; n < b.N; n++ {
+		pearsonHash(salt, keys)
+	}
+}
+
+func BenchmarkFillBuckets(b *testing.B) {
+	data, err := ioutil.ReadFile("tests/test_file_1")
+	if err != nil {
+		b.Error(err)
+	}
+	for n := 0; n < b.N; n++ {
+		fillBuckets(data)
+	}
+}
+
+func BenchmarkQuartilePoints(b *testing.B) {
+	data, err := ioutil.ReadFile("tests/test_file_1")
+	if err != nil {
+		b.Error(err)
+	}
+	buckets, _ := fillBuckets(data)
+	for n := 0; n < b.N; n++ {
+		quartilePoints(buckets)
 	}
 }

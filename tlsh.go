@@ -218,19 +218,12 @@ func makeStringTLSH(biHash []byte) (hash string) {
 	return
 }
 
-//Hash calculates the TLSH for the input file
-func Hash(filename string) (hash string, err error) {
-
-	buckets := make([]uint, numBuckets)
+func fillBuckets(data []byte) ([]uint, byte) {
 	chunk := make([]byte, windowLength)
+	buckets := make([]uint, numBuckets)
+	checksum := byte(0)
 	salt := []byte{2, 3, 5, 7, 11, 13}
 	sw := 0
-	checksum := byte(0)
-
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return
-	}
 
 	for sw <= len(data)-windowLength {
 
@@ -248,8 +241,18 @@ func Hash(filename string) (hash string, err error) {
 			buckets[pearsonHash(salt[i], triplet)]++
 		}
 	}
-	q1, q2, q3 := quartilePoints(buckets)
+	return buckets, checksum
+}
 
+//Hash calculates the TLSH for the input file
+func Hash(filename string) (hash string, err error) {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return
+	}
+
+	buckets, checksum := fillBuckets(data)
+	q1, q2, q3 := quartilePoints(buckets)
 	hash = makeStringTLSH(hashTLSH(len(data), buckets, checksum, q1, q2, q3))
 
 	return hash, nil
