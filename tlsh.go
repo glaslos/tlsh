@@ -7,13 +7,10 @@ import (
 )
 
 const (
-	log1_5   = 0.4054651
-	log1_3   = 0.26236426
-	log1_1   = 0.095310180
-	codeSize = 32
-)
-
-var (
+	log1_5       = 0.4054651
+	log1_3       = 0.26236426
+	log1_1       = 0.095310180
+	codeSize     = 32
 	windowLength = 5
 	effBuckets   = 128
 	numBuckets   = 256
@@ -25,8 +22,8 @@ type LSH struct {
 	Length   byte
 }
 
-func getTriplets(slice []byte) (triplets [][]byte) {
-	triplets = [][]byte{
+func getTriplets(slice [windowLength]byte) (triplets [6][3]byte) {
+	triplets = [6][3]byte{
 		{slice[0], slice[1], slice[2]},
 		{slice[0], slice[1], slice[3]},
 		{slice[0], slice[2], slice[3]},
@@ -37,7 +34,7 @@ func getTriplets(slice []byte) (triplets [][]byte) {
 	return triplets
 }
 
-func quartilePoints(buckets []uint) (q1, q2, q3 uint) {
+func quartilePoints(buckets [numBuckets]uint) (q1, q2, q3 uint) {
 	var spl, spr uint
 	p1 := uint(effBuckets/4 - 1)
 	p2 := uint(effBuckets/2 - 1)
@@ -174,7 +171,7 @@ func swapByte(in byte) byte {
 	return out
 }
 
-func bucketsBinaryRepresentation(buckets []uint, q1, q2, q3 uint) [codeSize]byte {
+func bucketsBinaryRepresentation(buckets [numBuckets]uint, q1, q2, q3 uint) [codeSize]byte {
 	var biHash [codeSize]byte
 
 	for i := 0; i < codeSize; i++ {
@@ -195,7 +192,7 @@ func bucketsBinaryRepresentation(buckets []uint, q1, q2, q3 uint) [codeSize]byte
 	return biHash
 }
 
-func hashTLSH(length int, buckets []uint, checksum byte, q1, q2, q3 uint) []byte {
+func hashTLSH(length int, buckets [numBuckets]uint, checksum byte, q1, q2, q3 uint) []byte {
 
 	// binary representation of buckets
 	biHash := bucketsBinaryRepresentation(buckets, q1, q2, q3)
@@ -218,11 +215,9 @@ func makeStringTLSH(biHash []byte) (hash string) {
 	return
 }
 
-func fillBuckets(data []byte) ([]uint, byte) {
-	chunk := make([]byte, windowLength)
-	buckets := make([]uint, numBuckets)
-	checksum := byte(0)
-	salt := []byte{2, 3, 5, 7, 11, 13}
+func fillBuckets(data []byte) (buckets [numBuckets]uint, checksum byte) {
+	chunk := [windowLength]byte{}
+	salt := [6]byte{2, 3, 5, 7, 11, 13}
 	sw := 0
 
 	for sw <= len(data)-windowLength {
@@ -234,7 +229,7 @@ func fillBuckets(data []byte) ([]uint, byte) {
 		sw++
 		triplets := getTriplets(chunk)
 
-		checksumTriplet := []byte{chunk[0], chunk[1], checksum}
+		checksumTriplet := [3]byte{chunk[0], chunk[1], checksum}
 		checksum = pearsonHash(0, checksumTriplet)
 
 		for i, triplet := range triplets {
