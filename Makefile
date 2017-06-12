@@ -8,6 +8,10 @@ clean:
 
 LDFLAGS := "-X \"main.VERSION=$(VERSIONSTRING)\" -X \"main.BUILDDATE=$(BUILDDATE)\""
 
+tag:
+	git tag $(VERSION)
+	git push origin --tags
+
 .PHONY: build_release
 build_release: clean
 	cd app; gox -arch="amd64" -os="windows darwin linux" -output="../dist/tlsh-{{.Arch}}-{{.OS}}" -ldflags=$(LDFLAGS)
