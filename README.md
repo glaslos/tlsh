@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/mushorg/go-dpi.svg?branch=master)](https://travis-ci.org/mushorg/go-dpi)
-[![GoDoc](https://godoc.org/github.com/mushorg/go-dpi?status.svg)](https://godoc.org/github.com/mushorg/go-dpi)
+[![Build Status](https://travis-ci.org/glaslos/tlsh.svg?branch=master)](https://travis-ci.org/glaslos/tlsh)
+[![GoDoc](https://godoc.org/github.com/glaslos/tlsh?status.svg)](https://godoc.org/github.com/glaslos/tlsh)
 
 # TLSH
 Trend Micro Locality Sensitive Hash lib in Golang
