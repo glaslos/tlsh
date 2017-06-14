@@ -16,7 +16,7 @@ var (
 )
 
 func main() {
-	var file = flag.String("f", "", "path to the file to be hashed")
+	var file = flag.String("f", "", "path to the `file` to be hashed")
 	var raw = flag.Bool("r", false, "set to get only the hash")
 	var version = flag.Bool("version", false, "print version")
 	flag.Parse()
