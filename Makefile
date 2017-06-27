@@ -15,3 +15,6 @@ tag:
 .PHONY: build_release
 build_release: clean
 	cd app; gox -arch="amd64" -os="windows darwin linux" -output="../dist/tlsh-{{.Arch}}-{{.OS}}" -ldflags=$(LDFLAGS)
+
+bench:
+	go test -bench=.

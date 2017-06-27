@@ -244,9 +244,14 @@ func fillBuckets(r fuzzyReader) ([numBuckets]uint, byte, int, error) {
 		triplets := getTriplets(chunk)
 		checksumTriplet := [3]byte{chunk[0], chunk[1], checksum}
 		checksum = pearsonHash(0, checksumTriplet)
-		for i, triplet := range triplets {
-			buckets[pearsonHash(salt[i], triplet)]++
-		}
+
+		buckets[pearsonHash(salt[0], triplets[0])]++
+		buckets[pearsonHash(salt[1], triplets[1])]++
+		buckets[pearsonHash(salt[2], triplets[2])]++
+		buckets[pearsonHash(salt[3], triplets[3])]++
+		buckets[pearsonHash(salt[4], triplets[4])]++
+		buckets[pearsonHash(salt[5], triplets[5])]++
+
 		copy(chunk[1:], chunk[0:4])
 		chunk[0], err = r.ReadByte()
 		if err != nil {

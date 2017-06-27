@@ -22,8 +22,8 @@ var vTable = [256]byte{
 
 func pearsonHash(salt byte, keys [3]byte) (h byte) {
 	h = vTable[h^salt]
-	for _, c := range keys {
-		h = vTable[h^c]
-	}
+	h = vTable[h^keys[0]]
+	h = vTable[h^keys[1]]
+	h = vTable[h^keys[2]]
 	return
 }
