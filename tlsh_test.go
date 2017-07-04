@@ -71,3 +71,10 @@ func BenchmarkQuartilePoints(b *testing.B) {
 		quartilePoints(buckets)
 	}
 }
+
+func BenchmarkHash(b *testing.B) {
+	f := "tests/test_file_1"
+	for n := 0; n < b.N; n++ {
+		Hash(f)
+	}
+}
