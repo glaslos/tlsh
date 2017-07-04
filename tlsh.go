@@ -241,16 +241,15 @@ func fillBuckets(r fuzzyReader) ([numBuckets]uint, byte, int, error) {
 	chunk = reverse(chunk)
 	fileSize += n
 	for {
-		triplets := getTriplets(chunk)
 		checksumTriplet := [3]byte{chunk[0], chunk[1], checksum}
-		checksum = pearsonHash(0, checksumTriplet)
+		checksum = pearsonHash(0, &checksumTriplet)
 
-		buckets[pearsonHash(salt[0], triplets[0])]++
-		buckets[pearsonHash(salt[1], triplets[1])]++
-		buckets[pearsonHash(salt[2], triplets[2])]++
-		buckets[pearsonHash(salt[3], triplets[3])]++
-		buckets[pearsonHash(salt[4], triplets[4])]++
-		buckets[pearsonHash(salt[5], triplets[5])]++
+		buckets[pearsonHash(salt[0], &[3]byte{chunk[0], chunk[1], chunk[2]})]++
+		buckets[pearsonHash(salt[1], &[3]byte{chunk[0], chunk[1], chunk[3]})]++
+		buckets[pearsonHash(salt[2], &[3]byte{chunk[0], chunk[2], chunk[3]})]++
+		buckets[pearsonHash(salt[3], &[3]byte{chunk[0], chunk[2], chunk[4]})]++
+		buckets[pearsonHash(salt[4], &[3]byte{chunk[0], chunk[1], chunk[4]})]++
+		buckets[pearsonHash(salt[5], &[3]byte{chunk[0], chunk[3], chunk[4]})]++
 
 		copy(chunk[1:], chunk[0:4])
 		chunk[0], err = r.ReadByte()

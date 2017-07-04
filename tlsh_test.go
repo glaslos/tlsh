@@ -38,7 +38,7 @@ func BenchmarkPearson(b *testing.B) {
 	var salt = byte(0)
 	var keys = [3]byte{1, 3, 7}
 	for n := 0; n < b.N; n++ {
-		pearsonHash(salt, keys)
+		pearsonHash(salt, &keys)
 	}
 }
 
