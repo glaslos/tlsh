@@ -241,8 +241,7 @@ func fillBuckets(r fuzzyReader) ([numBuckets]uint, byte, int, error) {
 	chunk = reverse(chunk)
 	fileSize += n
 	for {
-		checksumTriplet := [3]byte{chunk[0], chunk[1], checksum}
-		checksum = pearsonHash(0, &checksumTriplet)
+		checksum = pearsonHash(0, &[3]byte{chunk[0], chunk[1], checksum})
 
 		buckets[pearsonHash(salt[0], &[3]byte{chunk[0], chunk[1], chunk[2]})]++
 		buckets[pearsonHash(salt[1], &[3]byte{chunk[0], chunk[1], chunk[3]})]++
