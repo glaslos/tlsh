@@ -3,7 +3,7 @@ package tlsh
 import (
 	"bufio"
 	"bytes"
-	"fmt"
+	"encoding/hex"
 	"io"
 	"math"
 	"os"
@@ -197,15 +197,6 @@ func hashTLSH(length int, buckets [numBuckets]uint, checksum byte, q1, q2, q3 ui
 	return append([]byte{swapByte(checksum), swapByte(lValue(length)), qRatio}, biHash[:]...)
 }
 
-func makeStringTLSH(biHash []byte) (hash string) {
-
-	for i := 0; i < len(biHash); i++ {
-		hash += fmt.Sprintf("%02X", biHash[i])
-	}
-
-	return
-}
-
 func reverse(s [5]byte) [5]byte {
 	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
 		s[i], s[j] = s[j], s[i]
@@ -263,7 +254,7 @@ func HashReader(r fuzzyReader) (hash string, err error) {
 		return
 	}
 	q1, q2, q3 := quartilePoints(buckets)
-	hash = makeStringTLSH(hashTLSH(fileSize, buckets, checksum, q1, q2, q3))
+	hash = hex.EncodeToString(hashTLSH(fileSize, buckets, checksum, q1, q2, q3))
 
 	return hash, nil
 }
