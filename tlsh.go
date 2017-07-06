@@ -25,18 +25,6 @@ type LSH struct {
 	Length   byte
 }
 
-func getTriplets(slice [windowLength]byte) (triplets [6][3]byte) {
-	triplets = [6][3]byte{
-		{slice[0], slice[1], slice[2]},
-		{slice[0], slice[1], slice[3]},
-		{slice[0], slice[2], slice[3]},
-		{slice[0], slice[2], slice[4]},
-		{slice[0], slice[1], slice[4]},
-		{slice[0], slice[3], slice[4]},
-	}
-	return triplets
-}
-
 func quartilePoints(buckets [numBuckets]uint) (q1, q2, q3 uint) {
 	var spl, spr uint
 	p1 := uint(effBuckets/4 - 1)
