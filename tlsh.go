@@ -228,7 +228,7 @@ func reverse(s [5]byte) [5]byte {
 func fillBuckets(r fuzzyReader) ([numBuckets]uint, byte, int, error) {
 	buckets := [numBuckets]uint{}
 	chunkSlice := make([]byte, windowLength)
-	chunk := [5]byte{}
+	chunk := [windowLength]byte{}
 	salt := [6]byte{2, 3, 5, 7, 11, 13}
 	fileSize := 0
 	checksum := byte(0)
