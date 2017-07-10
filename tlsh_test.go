@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	testCases = []struct {
+	hashTestCases = []struct {
 		filename string
 		hash     string
 	}{
@@ -23,8 +23,8 @@ var (
 	}
 )
 
-func TestReal(t *testing.T) {
-	for _, tc := range testCases {
+func TestHash(t *testing.T) {
+	for _, tc := range hashTestCases {
 		if hash, err := Hash(tc.filename); hash != tc.hash {
 			if err != nil {
 				t.Error(err)
