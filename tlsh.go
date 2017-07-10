@@ -106,35 +106,36 @@ func quartilePoints(buckets [numBuckets]uint) (q1, q2, q3 uint) {
 	return q1, q2, q3
 }
 
-func partition(buf *[]uint, left, right uint) uint {
-
+func partition(pbuf *[]uint, left, right uint) uint {
 	if left == right {
 		return left
 	}
 
+	rbuf := (*pbuf)
+
 	if left+1 == right {
-		if (*buf)[left] > (*buf)[right] {
-			(*buf)[right], (*buf)[left] = (*buf)[left], (*buf)[right]
+		if rbuf[left] > rbuf[right] {
+			rbuf[right], rbuf[left] = rbuf[left], rbuf[right]
 		}
 		return left
 	}
 
 	ret := left
 	pivot := (left + right) >> 1
-	val := (*buf)[pivot]
+	val := rbuf[pivot]
 
-	(*buf)[pivot] = (*buf)[right]
-	(*buf)[right] = val
+	rbuf[pivot] = rbuf[right]
+	rbuf[right] = val
 
 	for i := left; i < right; i++ {
-		if (*buf)[i] < val {
-			(*buf)[i], (*buf)[ret] = (*buf)[ret], (*buf)[i]
+		if rbuf[i] < val {
+			rbuf[i], rbuf[ret] = rbuf[ret], rbuf[i]
 			ret++
 		}
 	}
 
-	(*buf)[right] = (*buf)[ret]
-	(*buf)[ret] = val
+	rbuf[right] = rbuf[ret]
+	rbuf[ret] = val
 
 	return ret
 }
