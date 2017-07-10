@@ -19,10 +19,34 @@ const (
 	numBuckets   = 256
 )
 
-// LSH holds the hash components
-type LSH struct {
-	Checksum byte
-	Length   byte
+// Tlsh holds hash components
+type Tlsh struct {
+	checksum byte
+	lValue   byte
+	q1Ratio  byte
+	q2Ratio  byte
+	qRatio   byte
+	code     [codeSize]byte
+}
+
+// newTlsh represents type factory for Tlsh
+func newTlsh(checksum, lValue, q1Ratio, q2Ratio, qRatio byte, code [codeSize]byte) *Tlsh {
+	return &Tlsh{
+		checksum: checksum,
+		lValue:   lValue,
+		q1Ratio:  q1Ratio,
+		q2Ratio:  q2Ratio,
+		qRatio:   qRatio,
+		code:     code,
+	}
+}
+
+func (t *Tlsh) binary() []byte {
+	return append([]byte{swapByte(t.checksum), swapByte(t.lValue), t.qRatio}, t.code[:]...)
+}
+
+func (t *Tlsh) string() string {
+	return hex.EncodeToString(t.binary())
 }
 
 func quartilePoints(buckets [numBuckets]uint) (q1, q2, q3 uint) {
