@@ -284,21 +284,52 @@ func fillBuckets(r fuzzyReader) ([numBuckets]uint, byte, int, error) {
 	return buckets, checksum, fileSize, nil
 }
 
+// hashCalculate calculate TLSH
+func hashCalculate(r fuzzyReader) (tlsh *Tlsh, err error) {
+	buckets, checksum, fileSize, err := fillBuckets(r)
+	if err != nil {
+		return &Tlsh{}, err
+	}
+
+	q1, q2, q3 := quartilePoints(buckets)
+	q1Ratio := byte(float32(q1)*100/float32(q3)) % 16
+	q2Ratio := byte(float32(q2)*100/float32(q3)) % 16
+	qRatio := ((q1Ratio & 0xF) << 4) | (q2Ratio & 0xF)
+
+	biHash := bucketsBinaryRepresentation(buckets, q1, q2, q3)
+
+	return newTlsh(checksum, lValue(fileSize), q1Ratio, q2Ratio, qRatio, biHash), nil
+}
+
+//hashFile returns TLSH for the input filename
+func hashFile(filename string) (hash string, err error) {
+	f, err := os.Open(filename)
+	defer f.Close()
+	if err != nil {
+		return
+	}
+
+	r := bufio.NewReader(f)
+	tlsh, err := hashCalculate(r)
+	if err != nil {
+		return "", err
+	}
+	return tlsh.string(), nil
+}
+
 type fuzzyReader interface {
 	Read([]byte) (int, error)
 	ReadByte() (byte, error)
 }
 
 //HashReader calculates the TLSH for the input reader
-func HashReader(r fuzzyReader) (hash string, err error) {
-	buckets, checksum, fileSize, err := fillBuckets(r)
+func HashReader(r fuzzyReader) (string, error) {
+	tlsh, err := hashCalculate(r)
 	if err != nil {
-		return
+		return "", err
 	}
-	q1, q2, q3 := quartilePoints(buckets)
-	hash = hex.EncodeToString(hashTLSH(fileSize, buckets, checksum, q1, q2, q3))
 
-	return hash, nil
+	return tlsh.string(), err
 }
 
 //HashBytes calculates the TLSH for the input byte slice
@@ -309,11 +340,31 @@ func HashBytes(blob []byte) (hash string, err error) {
 
 //Hash calculates the TLSH for the input file
 func Hash(filename string) (hash string, err error) {
-	f, err := os.Open(filename)
+	hash, err = hashFile(filename)
+	if err != nil {
+		return "", err
+	}
+
+	return hash, nil
+}
+
+// Diff calculate distance between two files
+func Diff(filenameA, filenameB string) (int, error) {
+	f, err := os.Open(filenameA)
 	defer f.Close()
 	if err != nil {
-		return
+		return -1, err
 	}
 	r := bufio.NewReader(f)
-	return HashReader(r)
+	tlshA, err := hashCalculate(r)
+
+	f, err = os.Open(filenameB)
+	defer f.Close()
+	if err != nil {
+		return -1, err
+	}
+	r = bufio.NewReader(f)
+	tlshB, err := hashCalculate(r)
+
+	return diffTotal(tlshA, tlshB, true), nil
 }
