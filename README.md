@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/glaslos/tlsh.svg?branch=master)](https://travis-ci.org/glaslos/tlsh)
+[![Coverage Status](https://coveralls.io/repos/github/glaslos/tlsh/badge.svg?branch=master)](https://coveralls.io/github/glaslos/tlsh?branch=master)
 [![GoDoc](https://godoc.org/github.com/glaslos/tlsh?status.svg)](https://godoc.org/github.com/glaslos/tlsh)
 
 # TLSH
