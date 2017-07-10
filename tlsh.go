@@ -220,15 +220,32 @@ func fillBuckets(r fuzzyReader) ([numBuckets]uint, byte, int, error) {
 	copy(chunk[:], chunkSlice[0:5])
 	chunk = reverse(chunk)
 	fileSize += n
-	for {
-		checksum = pearsonHash(0, &[3]byte{chunk[0], chunk[1], checksum})
 
-		buckets[pearsonHash(salt[0], &[3]byte{chunk[0], chunk[1], chunk[2]})]++
-		buckets[pearsonHash(salt[1], &[3]byte{chunk[0], chunk[1], chunk[3]})]++
-		buckets[pearsonHash(salt[2], &[3]byte{chunk[0], chunk[2], chunk[3]})]++
-		buckets[pearsonHash(salt[3], &[3]byte{chunk[0], chunk[2], chunk[4]})]++
-		buckets[pearsonHash(salt[4], &[3]byte{chunk[0], chunk[1], chunk[4]})]++
-		buckets[pearsonHash(salt[5], &[3]byte{chunk[0], chunk[3], chunk[4]})]++
+	chunk3 := &[3]byte{}
+
+	for {
+		chunk3[0] = chunk[0]
+		chunk3[1] = chunk[1]
+		chunk3[2] = checksum
+		checksum = pearsonHash(0, chunk3)
+
+		chunk3[2] = chunk[2]
+		buckets[pearsonHash(salt[0], chunk3)]++
+
+		chunk3[2] = chunk[3]
+		buckets[pearsonHash(salt[1], chunk3)]++
+
+		chunk3[1] = chunk[2]
+		buckets[pearsonHash(salt[2], chunk3)]++
+
+		chunk3[2] = chunk[4]
+		buckets[pearsonHash(salt[3], chunk3)]++
+
+		chunk3[1] = chunk[1]
+		buckets[pearsonHash(salt[4], chunk3)]++
+
+		chunk3[1] = chunk[3]
+		buckets[pearsonHash(salt[5], chunk3)]++
 
 		copy(chunk[1:], chunk[0:4])
 		chunk[0], err = r.ReadByte()
