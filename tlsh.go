@@ -285,7 +285,7 @@ func fillBuckets(r fuzzyReader) ([numBuckets]uint, byte, int, error) {
 }
 
 // hashCalculate calculate TLSH
-func hashCalculate(r fuzzyReader) (tlsh *Tlsh, err error) {
+func hashCalculate(r fuzzyReader) (*Tlsh, error) {
 	buckets, checksum, fileSize, err := fillBuckets(r)
 	if err != nil {
 		return &Tlsh{}, err
@@ -302,11 +302,11 @@ func hashCalculate(r fuzzyReader) (tlsh *Tlsh, err error) {
 }
 
 //hashFile returns TLSH for the input filename
-func hashFile(filename string) (hash string, err error) {
+func hashFile(filename string) (string, error) {
 	f, err := os.Open(filename)
 	defer f.Close()
 	if err != nil {
-		return
+		return "", err
 	}
 
 	r := bufio.NewReader(f)
