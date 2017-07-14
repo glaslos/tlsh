@@ -29,8 +29,8 @@ type Tlsh struct {
 	code     [codeSize]byte
 }
 
-// newTlsh represents type factory for Tlsh
-func newTlsh(checksum, lValue, q1Ratio, q2Ratio, qRatio byte, code [codeSize]byte) *Tlsh {
+// New represents type factory for Tlsh
+func New(checksum, lValue, q1Ratio, q2Ratio, qRatio byte, code [codeSize]byte) *Tlsh {
 	return &Tlsh{
 		checksum: checksum,
 		lValue:   lValue,
@@ -41,12 +41,14 @@ func newTlsh(checksum, lValue, q1Ratio, q2Ratio, qRatio byte, code [codeSize]byt
 	}
 }
 
-func (t *Tlsh) binary() []byte {
+// Binary returns the binary representation of the hash
+func (t *Tlsh) Binary() []byte {
 	return append([]byte{swapByte(t.checksum), swapByte(t.lValue), t.qRatio}, t.code[:]...)
 }
 
-func (t *Tlsh) string() string {
-	return hex.EncodeToString(t.binary())
+// String returns the string representation of the hash`
+func (t *Tlsh) String() string {
+	return hex.EncodeToString(t.Binary())
 }
 
 func quartilePoints(buckets [numBuckets]uint) (q1, q2, q3 uint) {
@@ -229,7 +231,7 @@ func reverse(s [5]byte) [5]byte {
 	return s
 }
 
-func fillBuckets(r fuzzyReader) ([numBuckets]uint, byte, int, error) {
+func fillBuckets(r FuzzyReader) ([numBuckets]uint, byte, int, error) {
 	buckets := [numBuckets]uint{}
 	chunkSlice := make([]byte, windowLength)
 	chunk := [windowLength]byte{}
@@ -285,7 +287,7 @@ func fillBuckets(r fuzzyReader) ([numBuckets]uint, byte, int, error) {
 }
 
 // hashCalculate calculate TLSH
-func hashCalculate(r fuzzyReader) (*Tlsh, error) {
+func hashCalculate(r FuzzyReader) (*Tlsh, error) {
 	buckets, checksum, fileSize, err := fillBuckets(r)
 	if err != nil {
 		return &Tlsh{}, err
@@ -298,11 +300,33 @@ func hashCalculate(r fuzzyReader) (*Tlsh, error) {
 
 	biHash := bucketsBinaryRepresentation(buckets, q1, q2, q3)
 
-	return newTlsh(checksum, lValue(fileSize), q1Ratio, q2Ratio, qRatio, biHash), nil
+	return New(checksum, lValue(fileSize), q1Ratio, q2Ratio, qRatio, biHash), nil
 }
 
-//hashFile returns TLSH for the input filename
-func hashFile(filename string) (string, error) {
+// FuzzyReader interface
+type FuzzyReader interface {
+	Read([]byte) (int, error)
+	ReadByte() (byte, error)
+}
+
+//HashReader calculates the TLSH for the input reader
+func HashReader(r FuzzyReader) (string, error) {
+	tlsh, err := hashCalculate(r)
+	if err != nil {
+		return "", err
+	}
+
+	return tlsh.String(), err
+}
+
+//HashBytes calculates the TLSH for the input byte slice
+func HashBytes(blob []byte) (hash string, err error) {
+	r := bytes.NewReader(blob)
+	return HashReader(r)
+}
+
+//HashFilename calculates the TLSH for the input file
+func HashFilename(filename string) (hash string, err error) {
 	f, err := os.Open(filename)
 	defer f.Close()
 	if err != nil {
@@ -314,42 +338,16 @@ func hashFile(filename string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return tlsh.string(), nil
+	return tlsh.String(), nil
 }
 
-type fuzzyReader interface {
-	Read([]byte) (int, error)
-	ReadByte() (byte, error)
+// Diff current hash with other hash
+func (t *Tlsh) Diff(t2 *Tlsh) int {
+	return diffTotal(t, t2, true)
 }
 
-//HashReader calculates the TLSH for the input reader
-func HashReader(r fuzzyReader) (string, error) {
-	tlsh, err := hashCalculate(r)
-	if err != nil {
-		return "", err
-	}
-
-	return tlsh.string(), err
-}
-
-//HashBytes calculates the TLSH for the input byte slice
-func HashBytes(blob []byte) (hash string, err error) {
-	r := bytes.NewReader(blob)
-	return HashReader(r)
-}
-
-//Hash calculates the TLSH for the input file
-func Hash(filename string) (hash string, err error) {
-	hash, err = hashFile(filename)
-	if err != nil {
-		return "", err
-	}
-
-	return hash, nil
-}
-
-// Diff calculate distance between two files
-func Diff(filenameA, filenameB string) (int, error) {
+// DiffFilenames calculate distance between two files
+func DiffFilenames(filenameA, filenameB string) (int, error) {
 	f, err := os.Open(filenameA)
 	defer f.Close()
 	if err != nil {
@@ -365,6 +363,9 @@ func Diff(filenameA, filenameB string) (int, error) {
 	}
 	r = bufio.NewReader(f)
 	tlshB, err := hashCalculate(r)
+	if err != nil {
+		return -1, err
+	}
 
-	return diffTotal(tlshA, tlshB, true), nil
+	return tlshA.Diff(tlshB), nil
 }

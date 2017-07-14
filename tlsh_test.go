@@ -37,7 +37,7 @@ var (
 
 func TestHash(t *testing.T) {
 	for _, tc := range hashTestCases {
-		if hash, err := Hash(tc.filename); hash != tc.hash {
+		if hash, err := HashFilename(tc.filename); hash != tc.hash {
 			if err != nil {
 				t.Error(err)
 			}
@@ -48,7 +48,7 @@ func TestHash(t *testing.T) {
 
 func TestDiff(t *testing.T) {
 	for _, tc := range diffTestCases {
-		if diff, err := Diff(tc.filenameA, tc.filenameB); diff != tc.diff {
+		if diff, err := DiffFilenames(tc.filenameA, tc.filenameB); diff != tc.diff {
 			if err != nil {
 				t.Error(err)
 			}
@@ -98,6 +98,6 @@ func BenchmarkQuartilePoints(b *testing.B) {
 func BenchmarkHash(b *testing.B) {
 	f := "tests/test_file_1"
 	for n := 0; n < b.N; n++ {
-		Hash(f)
+		HashFilename(f)
 	}
 }
