@@ -27,6 +27,7 @@ var (
 		filenameB string
 		diff      int
 	}{
+		{"tests/test_file_1", "tests/test_file_1", 0},
 		{"tests/test_file_1", "tests/test_file_2", 418},
 		{"tests/test_file_1", "tests/test_file_8_lena.png", 1014},
 		{"tests/test_file_3", "tests/test_file_1", 374},
