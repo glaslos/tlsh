@@ -101,3 +101,27 @@ func BenchmarkHash(b *testing.B) {
 		HashFilename(f)
 	}
 }
+
+func BenchmarkModDiff(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		modDiff(45, 156, 256)
+	}
+}
+
+func BenchmarkDigestDistance(b *testing.B) {
+	h1, _ := HashFilename("tests/test_file_1")
+	h2, _ := HashFilename("tests/test_file_2")
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		digestDistance(h1.code, h2.code)
+	}
+}
+
+func BenchmarkDiffTotal(b *testing.B) {
+	h1, _ := HashFilename("tests/test_file_1")
+	h2, _ := HashFilename("tests/test_file_2")
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		diffTotal(h1, h2, true)
+	}
+}
