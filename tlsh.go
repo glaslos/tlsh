@@ -326,19 +326,19 @@ func HashBytes(blob []byte) (hash string, err error) {
 }
 
 //HashFilename calculates the TLSH for the input file
-func HashFilename(filename string) (hash string, err error) {
+func HashFilename(filename string) (tlsh *Tlsh, err error) {
 	f, err := os.Open(filename)
 	defer f.Close()
 	if err != nil {
-		return "", err
+		return &Tlsh{}, err
 	}
 
 	r := bufio.NewReader(f)
-	tlsh, err := hashCalculate(r)
+	tlsh, err = hashCalculate(r)
 	if err != nil {
-		return "", err
+		return &Tlsh{}, err
 	}
-	return tlsh.String(), nil
+	return tlsh, nil
 }
 
 // Diff current hash with other hash

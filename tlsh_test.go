@@ -37,7 +37,7 @@ var (
 
 func TestHash(t *testing.T) {
 	for _, tc := range hashTestCases {
-		if hash, err := HashFilename(tc.filename); hash != tc.hash {
+		if hash, err := HashFilename(tc.filename); hash.String() != tc.hash {
 			if err != nil {
 				t.Error(err)
 			}
