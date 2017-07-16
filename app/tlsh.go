@@ -16,11 +16,13 @@ var (
 )
 
 var file string
+var compare string
 var raw bool
 var version bool
 
 func init() {
 	flag.StringVar(&file, "f", "", "path to the `file` to be hashed")
+	flag.StringVar(&compare, "c", "", "specifies a `filename` od `digest` whose TLSH value will be compared to a filename specified (-f)")
 	flag.BoolVar(&raw, "r", false, "set to get only the hash")
 	flag.BoolVar(&version, "version", false, "print version")
 	flag.Parse()
@@ -43,10 +45,21 @@ func Main() {
 		fmt.Println(err)
 		return
 	}
-	if raw {
-		fmt.Println(hash)
+	if compare != "" {
+		hashCompare, err := tlsh.HashFilename(compare)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		distance := hash.Diff(hashCompare)
+
+		fmt.Printf("%d  %s  %s - %s  %s\n", distance, hash, file, hashCompare, compare)
 	} else {
-		fmt.Printf("%s  %s\n", hash, file)
+		if raw {
+			fmt.Println(hash)
+		} else {
+			fmt.Printf("%s  %s\n", hash, file)
+		}
 	}
 }
 
