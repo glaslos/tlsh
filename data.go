@@ -1,11 +1,15 @@
 package tlsh
 
 // bitPairsDiffTable is pre-calculated table that represents approximation
-// to the Hamming distance.
-// See https://github.com/trendmicro/tlsh/blob/master/TLSH_CTC_final.pdf
-// and https://github.com/trendmicro/tlsh/blob/master/src/tlsh_util.cpp#L84-L4694
+// to the Hamming distance. It's generated using Jonathan Oliver's algorithm.
+//
+// Original implementation and algorithm for generation can be found on
+// following urls:
+// https://github.com/trendmicro/tlsh/blob/master/src/tlsh_util.cpp#L84-L4694
 // https://github.com/trendmicro/tlsh/blob/master/src/gen_arr2.cpp#L1-L91
-// for details on the bit pairs diff table generation
+//
+// Details about distance score can be also found in Trendmicro TLSH paper:
+// https://github.com/trendmicro/tlsh/blob/master/TLSH_CTC_final.pdf
 
 var bitPairsDiffTable = [256][256]int{
 	{
