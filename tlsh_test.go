@@ -72,6 +72,7 @@ func BenchmarkFillBuckets(b *testing.B) {
 		b.Error(err)
 	}
 	f.Seek(0, 0)
+	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		r := bufio.NewReader(f)
 		fillBuckets(r)
@@ -90,6 +91,7 @@ func BenchmarkQuartilePoints(b *testing.B) {
 	if err != nil {
 		b.Error(err)
 	}
+	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		quartilePoints(buckets)
 	}
