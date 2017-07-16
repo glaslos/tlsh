@@ -20,6 +20,8 @@ var (
 		{"tests/test_file_7_lena.jpg", "85c2f1ce3d989428683106ebe5eaaac924f2d5020b38b1550da8e5f0dd8c65decf7037"},
 		{"tests/test_file_8_lena.png", "f7a433b5648bcc69dd48e1ddf1a1876c56e08c0bb264438fab412c4686fa3f3db05e36"},
 		{"tests/test_file_9_tinyssl.exe", "67a3ad97f601c873e11a0af49d83d2d6bc7f7f709e522c9b74990b0e8d796822d1d48a"},
+		{"tests/NON_EXISTENT", "0000000000000000000000000000000000000000000000000000000000000000000000"},
+		{"tests/test_file_empty", "0000000000000000000000000000000000000000000000000000000000000000000000"},
 	}
 
 	diffTestCases = []struct {
@@ -33,6 +35,10 @@ var (
 		{"tests/test_file_3", "tests/test_file_1", 374},
 		{"tests/test_file_3", "tests/test_file_8_lena.png", 967},
 		{"tests/test_file_7_lena.jpg", "tests/test_file_8_lena.png", 619},
+		{"tests/test_file_1", "tests/NON_EXISTENT", -1},
+		{"tests/NON_EXISTENT", "tests/test_file_1", -1},
+		{"tests/test_file_1", "tests/test_file_empty", -1},
+		{"tests/test_file_empty", "tests/test_file_1", -1},
 	}
 )
 
