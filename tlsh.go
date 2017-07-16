@@ -210,20 +210,6 @@ func bucketsBinaryRepresentation(buckets [numBuckets]uint, q1, q2, q3 uint) [cod
 	return biHash
 }
 
-func hashTLSH(length int, buckets [numBuckets]uint, checksum byte, q1, q2, q3 uint) []byte {
-
-	// binary representation of buckets
-	biHash := bucketsBinaryRepresentation(buckets, q1, q2, q3)
-
-	q1Ratio := byte(float32(q1)*100/float32(q3)) % 16
-	q2Ratio := byte(float32(q2)*100/float32(q3)) % 16
-
-	qRatio := ((q1Ratio & 0xF) << 4) | (q2Ratio & 0xF)
-
-	// prepend header
-	return append([]byte{swapByte(checksum), swapByte(lValue(length)), qRatio}, biHash[:]...)
-}
-
 func reverse(s [5]byte) [5]byte {
 	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
 		s[i], s[j] = s[j], s[i]
