@@ -341,6 +341,9 @@ func DiffFilenames(filenameA, filenameB string) (int, error) {
 	}
 	r := bufio.NewReader(f)
 	tlshA, err := hashCalculate(r)
+	if err != nil {
+		return -1, err
+	}
 
 	f, err = os.Open(filenameB)
 	defer f.Close()
