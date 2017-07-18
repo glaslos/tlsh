@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/glaslos/tlsh.svg?branch=master)](https://travis-ci.org/glaslos/tlsh)
 [![Coverage Status](https://coveralls.io/repos/github/glaslos/tlsh/badge.svg?branch=master)](https://coveralls.io/github/glaslos/tlsh?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/glaslos/tlsh)](https://goreportcard.com/report/github.com/glaslos/tlsh)
 [![GoDoc](https://godoc.org/github.com/glaslos/tlsh?status.svg)](https://godoc.org/github.com/glaslos/tlsh)
 
 # TLSH
