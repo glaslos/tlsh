@@ -24,7 +24,7 @@ func digestDistance(x [codeSize]byte, y [codeSize]byte) (diff int) {
 	return
 }
 
-// diffTotal calculates diff between to Tlsh hashes for hash header and body.
+// diffTotal calculates diff between two Tlsh hashes for hash header and body.
 func diffTotal(a, b *Tlsh, lenDiff bool) (diff int) {
 	if lenDiff {
 		lDiff := modDiff(a.lValue, b.lValue, 256)
@@ -52,7 +52,7 @@ func diffTotal(a, b *Tlsh, lenDiff bool) (diff int) {
 		diff += (q2Diff - 1) * 12
 	}
 
-	// currently we only support 1 byte cheksum
+	// currently we only support 1 byte checksum
 	if a.checksum != b.checksum {
 		diff++
 	}
