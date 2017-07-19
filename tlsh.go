@@ -65,7 +65,7 @@ func quartilePoints(buckets [numBuckets]uint) (q1, q2, q3 uint) {
 	shortCutRight := make([]uint, effBuckets)
 
 	for l, r := uint(0), end; ; {
-		ret := partition(&bucketCopy, l, r)
+		ret := partition(bucketCopy, l, r)
 		if ret > p2 {
 			r = ret - 1
 			shortCutRight[spr] = ret
@@ -87,7 +87,7 @@ func quartilePoints(buckets [numBuckets]uint) (q1, q2, q3 uint) {
 		r := shortCutLeft[i]
 		if r > p1 {
 			for {
-				ret := partition(&bucketCopy, l, r)
+				ret := partition(bucketCopy, l, r)
 				if ret > p1 {
 					r = ret - 1
 				} else if ret < p1 {
@@ -110,7 +110,7 @@ func quartilePoints(buckets [numBuckets]uint) (q1, q2, q3 uint) {
 		l := shortCutRight[i]
 		if l < p3 {
 			for {
-				ret := partition(&bucketCopy, l, r)
+				ret := partition(bucketCopy, l, r)
 				if ret > p3 {
 					r = ret - 1
 				} else if ret < p3 {
@@ -132,36 +132,34 @@ func quartilePoints(buckets [numBuckets]uint) (q1, q2, q3 uint) {
 	return q1, q2, q3
 }
 
-func partition(pbuf *[]uint, left, right uint) uint {
+func partition(buf []uint, left, right uint) uint {
 	if left == right {
 		return left
 	}
 
-	rbuf := (*pbuf)
-
 	if left+1 == right {
-		if rbuf[left] > rbuf[right] {
-			rbuf[right], rbuf[left] = rbuf[left], rbuf[right]
+		if buf[left] > buf[right] {
+			buf[right], buf[left] = buf[left], buf[right]
 		}
 		return left
 	}
 
 	ret := left
 	pivot := (left + right) >> 1
-	val := rbuf[pivot]
+	val := buf[pivot]
 
-	rbuf[pivot] = rbuf[right]
-	rbuf[right] = val
+	buf[pivot] = buf[right]
+	buf[right] = val
 
 	for i := left; i < right; i++ {
-		if rbuf[i] < val {
-			rbuf[i], rbuf[ret] = rbuf[ret], rbuf[i]
+		if buf[i] < val {
+			buf[i], buf[ret] = buf[ret], buf[i]
 			ret++
 		}
 	}
 
-	rbuf[right] = rbuf[ret]
-	rbuf[ret] = val
+	buf[right] = buf[ret]
+	buf[ret] = val
 
 	return ret
 }
