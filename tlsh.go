@@ -296,17 +296,16 @@ type FuzzyReader interface {
 }
 
 //HashReader calculates the TLSH for the input reader
-func HashReader(r FuzzyReader) (string, error) {
-	tlsh, err := hashCalculate(r)
+func HashReader(r FuzzyReader) (tlsh *Tlsh, err error) {
+	tlsh, err = hashCalculate(r)
 	if err != nil {
-		return "", err
+		return &Tlsh{}, err
 	}
-
-	return tlsh.String(), err
+	return tlsh, err
 }
 
 //HashBytes calculates the TLSH for the input byte slice
-func HashBytes(blob []byte) (hash string, err error) {
+func HashBytes(blob []byte) (tlsh *Tlsh, err error) {
 	r := bytes.NewReader(blob)
 	return HashReader(r)
 }
@@ -320,11 +319,7 @@ func HashFilename(filename string) (tlsh *Tlsh, err error) {
 	}
 
 	r := bufio.NewReader(f)
-	tlsh, err = hashCalculate(r)
-	if err != nil {
-		return &Tlsh{}, err
-	}
-	return tlsh, nil
+	return HashReader(r)
 }
 
 // Diff current hash with other hash
