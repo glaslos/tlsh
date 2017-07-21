@@ -36,8 +36,22 @@ func TestMainCompare(t *testing.T) {
 	Main()
 }
 
+func TestMainCompareError(t *testing.T) {
+	version = false
+	file = "../tests/test_file_1"
+	compare = "../tests/NON_EXISTENT"
+	raw = false
+	Main()
+}
+
 func TestMainHelp(t *testing.T) {
 	version = false
 	file = ""
 	Main()
+}
+
+func TestMainEntryPoint(t *testing.T) {
+	version = false
+	file = ""
+	main()
 }
