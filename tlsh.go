@@ -303,8 +303,8 @@ func hashCalculate(r FuzzyReader) (*Tlsh, error) {
 
 // FuzzyReader interface
 type FuzzyReader interface {
-	Read([]byte) (int, error)
-	ReadByte() (byte, error)
+	io.Reader
+	io.ByteReader
 }
 
 //HashReader calculates the TLSH for the input reader
