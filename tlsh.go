@@ -65,6 +65,22 @@ func (t *Tlsh) String() string {
 	return hex.EncodeToString(t.Binary())
 }
 
+// Parsing the hash of the string type 
+func ParseStringToTlsh(hashString string) (*Tlsh, error) {
+	var code [codeSize]byte
+	hashByte, err := hex.DecodeString(hashString)
+	if err != nil {
+		return &Tlsh{}, err
+	}
+	chechsum := swapByte(hashByte[0])
+	lValue := swapByte(hashByte[1])
+	qRatio := hashByte[2]
+	q1Ratio := (qRatio >> 4) & 0xF
+	q2Ratio := qRatio & 0xF
+	copy(code[:], hashByte[3:])
+	return New(chechsum, lValue, q1Ratio, q2Ratio, qRatio, code), nil
+}
+
 func quartilePoints(buckets [numBuckets]uint) (q1, q2, q3 uint) {
 	var spl, spr uint
 	p1 := uint(effBuckets/4 - 1)
