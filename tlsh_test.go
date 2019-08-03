@@ -79,6 +79,19 @@ func TestDiff(t *testing.T) {
 	}
 }
 
+func TestParseStringToTlsh(t *testing.T) {
+	for _, tc := range hashTestCases {
+		if hash, err := ParseStringToTlsh(tc.hash); err != nil || hash.String() != tc.hash {
+			if err != nil {
+				t.Error(err)
+			}
+			if hash.String() != tc.hash {
+				t.Errorf("\noriginal and parsed tlsh have different hash %s vs. %s\n", tc.hash, hash.String())
+			}
+		}
+	}
+}
+
 func BenchmarkPearson(b *testing.B) {
 	var salt = byte(0)
 	var keys = [3]byte{1, 3, 7}
