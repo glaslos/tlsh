@@ -15,18 +15,12 @@ var (
 	BUILDDATE = ""
 )
 
-var file string
-var compare string
-var raw bool
-var version bool
-
-func init() {
-	flag.StringVar(&file, "f", "", "path to the `file` to be hashed")
-	flag.StringVar(&compare, "c", "", "specifies a `filename` or `digest` whose TLSH value will be compared to a filename specified (-f)")
-	flag.BoolVar(&raw, "r", false, "set to get only the hash")
-	flag.BoolVar(&version, "version", false, "print version")
-	flag.Parse()
-}
+var (
+	file    string
+	compare string
+	raw     bool
+	version bool
+)
 
 // Main contains the main code
 func Main() {
@@ -64,5 +58,10 @@ func Main() {
 }
 
 func main() {
+	flag.StringVar(&file, "f", "", "path to the `file` to be hashed")
+	flag.StringVar(&compare, "c", "", "specifies a `filename` or `digest` whose TLSH value will be compared to a filename specified (-f)")
+	flag.BoolVar(&raw, "r", false, "set to get only the hash")
+	flag.BoolVar(&version, "version", false, "print version")
+	flag.Parse()
 	Main()
 }

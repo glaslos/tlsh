@@ -57,10 +57,11 @@ func TestHash(t *testing.T) {
 func TestHashBytes(t *testing.T) {
 	for _, tc := range hashTestCases {
 		f, err := os.Open(tc.filename)
-		defer f.Close()
 		if err != nil {
 			continue
 		}
+		defer f.Close()
+
 		bytes, _ := ioutil.ReadAll(f)
 		if out, _ := HashBytes(bytes); out.String() != tc.hash {
 			t.Errorf("\nfilename: %s\n%s\n%s - doesn't match real hash\n", tc.filename, tc.hash, out)
@@ -102,10 +103,11 @@ func BenchmarkPearson(b *testing.B) {
 
 func BenchmarkFillBuckets(b *testing.B) {
 	f, err := os.Open("tests/test_file_1")
-	defer f.Close()
 	if err != nil {
 		b.Error(err)
 	}
+	defer f.Close()
+
 	f.Seek(0, 0)
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
@@ -117,10 +119,11 @@ func BenchmarkFillBuckets(b *testing.B) {
 
 func BenchmarkQuartilePoints(b *testing.B) {
 	f, err := os.Open("tests/test_file_1")
-	defer f.Close()
 	if err != nil {
 		b.Error(err)
 	}
+	defer f.Close()
+
 	r := bufio.NewReader(f)
 	buckets, _, _, err := fillBuckets(r)
 	if err != nil {

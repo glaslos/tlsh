@@ -65,7 +65,7 @@ func (t *Tlsh) String() string {
 	return hex.EncodeToString(t.Binary())
 }
 
-// Parsing the hash of the string type 
+// Parsing the hash of the string type
 func ParseStringToTlsh(hashString string) (*Tlsh, error) {
 	var code [codeSize]byte
 	hashByte, err := hex.DecodeString(hashString)
@@ -341,10 +341,10 @@ func HashBytes(blob []byte) (tlsh *Tlsh, err error) {
 //HashFilename calculates the TLSH for the input file
 func HashFilename(filename string) (tlsh *Tlsh, err error) {
 	f, err := os.Open(filename)
-	defer f.Close()
 	if err != nil {
 		return &Tlsh{}, err
 	}
+	defer f.Close()
 
 	r := bufio.NewReader(f)
 	return HashReader(r)
@@ -358,10 +358,11 @@ func (t *Tlsh) Diff(t2 *Tlsh) int {
 // DiffFilenames calculate distance between two files
 func DiffFilenames(filenameA, filenameB string) (int, error) {
 	f, err := os.Open(filenameA)
-	defer f.Close()
 	if err != nil {
 		return -1, err
 	}
+	defer f.Close()
+
 	r := bufio.NewReader(f)
 	tlshA, err := hashCalculate(r)
 	if err != nil {
@@ -369,10 +370,11 @@ func DiffFilenames(filenameA, filenameB string) (int, error) {
 	}
 
 	f, err = os.Open(filenameB)
-	defer f.Close()
 	if err != nil {
 		return -1, err
 	}
+	defer f.Close()
+
 	r = bufio.NewReader(f)
 	tlshB, err := hashCalculate(r)
 	if err != nil {
