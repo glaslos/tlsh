@@ -1,7 +1,6 @@
-[![Build Status](https://travis-ci.org/glaslos/tlsh.svg?branch=master)](https://travis-ci.org/glaslos/tlsh)
-[![Coverage Status](https://coveralls.io/repos/github/glaslos/tlsh/badge.svg?branch=master)](https://coveralls.io/github/glaslos/tlsh?branch=master)
+![Workflow](https://github.com/glaslos/ssdeep/actions/workflows/go.yml/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/glaslos/tlsh)](https://goreportcard.com/report/github.com/glaslos/tlsh)
-[![GoDoc](https://godoc.org/github.com/glaslos/tlsh?status.svg)](https://godoc.org/github.com/glaslos/tlsh)
+[![Go Reference](https://pkg.go.dev/badge/badge/glaslos/tlsh.svg)](https://pkg.go.dev/badge/glaslos/tlsh)
 
 # TLSH
 Trend Micro Locality Sensitive Hash lib in Golang
