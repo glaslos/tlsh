@@ -50,9 +50,7 @@ func (t *TLSH) Sum(b []byte) []byte {
 
 	biHash := bucketsBinaryRepresentation(t.state.buckets, q1, q2, q3)
 
-	h := New(t.state.checksum, lValue(t.state.fileSize), q1Ratio, q2Ratio, qRatio, biHash)
-	h.state = t.state
-	*t = *h
+	*t = *new(t.state.checksum, lValue(t.state.fileSize), q1Ratio, q2Ratio, qRatio, biHash, t.state)
 	return t.Binary()
 }
 

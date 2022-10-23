@@ -45,7 +45,20 @@ type TLSH struct {
 }
 
 // New represents type factory for Tlsh
-func New(checksum, lValue, q1Ratio, q2Ratio, qRatio byte, code [codeSize]byte) *TLSH {
+func New() *TLSH {
+	return &TLSH{
+		state: chunkState{
+			buckets:    [numBuckets]uint{},
+			chunk:      [windowLength]byte{},
+			chunkSlice: []byte{},
+			fileSize:   0,
+			checksum:   byte(0),
+			chunk3:     &[3]byte{},
+		},
+	}
+}
+
+func new(checksum, lValue, q1Ratio, q2Ratio, qRatio byte, code [codeSize]byte, state chunkState) *TLSH {
 	return &TLSH{
 		checksum: checksum,
 		lValue:   lValue,
@@ -53,6 +66,7 @@ func New(checksum, lValue, q1Ratio, q2Ratio, qRatio byte, code [codeSize]byte) *
 		q2Ratio:  q2Ratio,
 		qRatio:   qRatio,
 		code:     code,
+		state:    state,
 	}
 }
 
@@ -79,7 +93,7 @@ func ParseStringToTlsh(hashString string) (*TLSH, error) {
 	q1Ratio := (qRatio >> 4) & 0xF
 	q2Ratio := qRatio & 0xF
 	copy(code[:], hashByte[3:])
-	return New(chechsum, lValue, q1Ratio, q2Ratio, qRatio, code), nil
+	return new(chechsum, lValue, q1Ratio, q2Ratio, qRatio, code, chunkState{}), nil
 }
 
 func quartilePoints(buckets [numBuckets]uint) (q1, q2, q3 uint) {
@@ -314,12 +328,13 @@ func hashCalculate(r FuzzyReader) (*TLSH, error) {
 
 	biHash := bucketsBinaryRepresentation(buckets, q1, q2, q3)
 
-	t := New(checksum, lValue(fileSize), q1Ratio, q2Ratio, qRatio, biHash)
-	t.state = chunkState{
-		buckets:  buckets,
-		fileSize: fileSize,
-		checksum: checksum,
-	}
+	t := new(checksum, lValue(fileSize), q1Ratio, q2Ratio, qRatio, biHash,
+		chunkState{
+			buckets:  buckets,
+			fileSize: fileSize,
+			checksum: checksum,
+		},
+	)
 	return t, nil
 }
 
