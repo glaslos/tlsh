@@ -33,19 +33,20 @@ const (
 	numBuckets   = 256
 )
 
-// Tlsh holds hash components
-type Tlsh struct {
+// TLSH holds hash components
+type TLSH struct {
 	checksum byte
 	lValue   byte
 	q1Ratio  byte
 	q2Ratio  byte
 	qRatio   byte
 	code     [codeSize]byte
+	state    chunkState
 }
 
 // New represents type factory for Tlsh
-func New(checksum, lValue, q1Ratio, q2Ratio, qRatio byte, code [codeSize]byte) *Tlsh {
-	return &Tlsh{
+func New(checksum, lValue, q1Ratio, q2Ratio, qRatio byte, code [codeSize]byte) *TLSH {
+	return &TLSH{
 		checksum: checksum,
 		lValue:   lValue,
 		q1Ratio:  q1Ratio,
@@ -56,21 +57,21 @@ func New(checksum, lValue, q1Ratio, q2Ratio, qRatio byte, code [codeSize]byte) *
 }
 
 // Binary returns the binary representation of the hash
-func (t *Tlsh) Binary() []byte {
+func (t *TLSH) Binary() []byte {
 	return append([]byte{swapByte(t.checksum), swapByte(t.lValue), t.qRatio}, t.code[:]...)
 }
 
 // String returns the string representation of the hash`
-func (t *Tlsh) String() string {
+func (t *TLSH) String() string {
 	return hex.EncodeToString(t.Binary())
 }
 
 // Parsing the hash of the string type
-func ParseStringToTlsh(hashString string) (*Tlsh, error) {
+func ParseStringToTlsh(hashString string) (*TLSH, error) {
 	var code [codeSize]byte
 	hashByte, err := hex.DecodeString(hashString)
 	if err != nil {
-		return &Tlsh{}, err
+		return &TLSH{}, err
 	}
 	chechsum := swapByte(hashByte[0])
 	lValue := swapByte(hashByte[1])
@@ -249,7 +250,6 @@ func fillBuckets(r FuzzyReader) ([numBuckets]uint, byte, int, error) {
 	buckets := [numBuckets]uint{}
 	chunkSlice := make([]byte, windowLength)
 	chunk := [windowLength]byte{}
-	salt := [6]byte{2, 3, 5, 7, 11, 13}
 	fileSize := 0
 	checksum := byte(0)
 
@@ -301,10 +301,10 @@ func fillBuckets(r FuzzyReader) ([numBuckets]uint, byte, int, error) {
 }
 
 // hashCalculate calculate TLSH
-func hashCalculate(r FuzzyReader) (*Tlsh, error) {
+func hashCalculate(r FuzzyReader) (*TLSH, error) {
 	buckets, checksum, fileSize, err := fillBuckets(r)
 	if err != nil {
-		return &Tlsh{}, err
+		return &TLSH{}, err
 	}
 
 	q1, q2, q3 := quartilePoints(buckets)
@@ -314,7 +314,13 @@ func hashCalculate(r FuzzyReader) (*Tlsh, error) {
 
 	biHash := bucketsBinaryRepresentation(buckets, q1, q2, q3)
 
-	return New(checksum, lValue(fileSize), q1Ratio, q2Ratio, qRatio, biHash), nil
+	t := New(checksum, lValue(fileSize), q1Ratio, q2Ratio, qRatio, biHash)
+	t.state = chunkState{
+		buckets:  buckets,
+		fileSize: fileSize,
+		checksum: checksum,
+	}
+	return t, nil
 }
 
 // FuzzyReader interface
@@ -324,25 +330,25 @@ type FuzzyReader interface {
 }
 
 //HashReader calculates the TLSH for the input reader
-func HashReader(r FuzzyReader) (tlsh *Tlsh, err error) {
-	tlsh, err = hashCalculate(r)
+func HashReader(r FuzzyReader) (*TLSH, error) {
+	t, err := hashCalculate(r)
 	if err != nil {
-		return &Tlsh{}, err
+		return &TLSH{}, err
 	}
-	return tlsh, err
+	return t, err
 }
 
 //HashBytes calculates the TLSH for the input byte slice
-func HashBytes(blob []byte) (tlsh *Tlsh, err error) {
+func HashBytes(blob []byte) (*TLSH, error) {
 	r := bytes.NewReader(blob)
 	return HashReader(r)
 }
 
 //HashFilename calculates the TLSH for the input file
-func HashFilename(filename string) (tlsh *Tlsh, err error) {
+func HashFilename(filename string) (*TLSH, error) {
 	f, err := os.Open(filename)
 	if err != nil {
-		return &Tlsh{}, err
+		return &TLSH{}, err
 	}
 	defer f.Close()
 
@@ -351,7 +357,7 @@ func HashFilename(filename string) (tlsh *Tlsh, err error) {
 }
 
 // Diff current hash with other hash
-func (t *Tlsh) Diff(t2 *Tlsh) int {
+func (t *TLSH) Diff(t2 *TLSH) int {
 	return diffTotal(t, t2, true)
 }
 

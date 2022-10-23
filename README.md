@@ -1,6 +1,6 @@
 ![Workflow](https://github.com/glaslos/ssdeep/actions/workflows/go.yml/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/glaslos/tlsh)](https://goreportcard.com/report/github.com/glaslos/tlsh)
-[![Go Reference](https://pkg.go.dev/badge/badge/glaslos/tlsh.svg)](https://pkg.go.dev/badge/glaslos/tlsh)
+[![Go Reference](https://pkg.go.dev/badge/badge/glaslos/tlsh.svg)](https://pkg.go.dev/github.com/glaslos/tlsh)
 
 # TLSH
 Trend Micro Locality Sensitive Hash lib in Golang
