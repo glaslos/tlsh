@@ -260,58 +260,74 @@ func reverse(s [5]byte) [5]byte {
 	return s
 }
 
-func fillBuckets(r FuzzyReader) ([numBuckets]uint, byte, int, error) {
-	buckets := [numBuckets]uint{}
-	chunkSlice := make([]byte, windowLength)
-	chunk := [windowLength]byte{}
-	fileSize := 0
-	checksum := byte(0)
+type chunkState struct {
+	buckets    [numBuckets]uint
+	chunk      [windowLength]byte
+	chunkSlice []byte
+	fileSize   int
+	checksum   byte
+	chunk3     *[3]byte
+}
 
-	n, err := r.Read(chunkSlice)
+func (s *chunkState) process() {
+	s.chunk3[0] = s.chunk[0]
+	s.chunk3[1] = s.chunk[1]
+	s.chunk3[2] = s.checksum
+	s.checksum = pearsonHash(0, s.chunk3)
+
+	s.chunk3[2] = s.chunk[2]
+	s.buckets[pearsonHash(salt[0], s.chunk3)]++
+
+	s.chunk3[2] = s.chunk[3]
+	s.buckets[pearsonHash(salt[1], s.chunk3)]++
+
+	s.chunk3[1] = s.chunk[2]
+	s.buckets[pearsonHash(salt[2], s.chunk3)]++
+
+	s.chunk3[2] = s.chunk[4]
+	s.buckets[pearsonHash(salt[3], s.chunk3)]++
+
+	s.chunk3[1] = s.chunk[1]
+	s.buckets[pearsonHash(salt[4], s.chunk3)]++
+
+	s.chunk3[1] = s.chunk[3]
+	s.buckets[pearsonHash(salt[5], s.chunk3)]++
+
+	copy(s.chunk[1:], s.chunk[0:4])
+}
+
+var salt = [6]byte{2, 3, 5, 7, 11, 13}
+
+func fillBuckets(r FuzzyReader) ([numBuckets]uint, byte, int, error) {
+	state := chunkState{}
+	state.buckets = [numBuckets]uint{}
+	state.chunkSlice = make([]byte, windowLength)
+	state.chunk = [windowLength]byte{}
+	state.fileSize = 0
+	state.checksum = byte(0)
+
+	n, err := r.Read(state.chunkSlice)
 	if err != nil {
 		return [numBuckets]uint{}, 0, 0, err
 	}
-	copy(chunk[:], chunkSlice[0:5])
-	chunk = reverse(chunk)
-	fileSize += n
+	copy(state.chunk[:], state.chunkSlice[0:5])
+	state.chunk = reverse(state.chunk)
+	state.fileSize += n
 
-	chunk3 := &[3]byte{}
+	state.chunk3 = &[3]byte{}
 
 	for {
-		chunk3[0] = chunk[0]
-		chunk3[1] = chunk[1]
-		chunk3[2] = checksum
-		checksum = pearsonHash(0, chunk3)
-
-		chunk3[2] = chunk[2]
-		buckets[pearsonHash(salt[0], chunk3)]++
-
-		chunk3[2] = chunk[3]
-		buckets[pearsonHash(salt[1], chunk3)]++
-
-		chunk3[1] = chunk[2]
-		buckets[pearsonHash(salt[2], chunk3)]++
-
-		chunk3[2] = chunk[4]
-		buckets[pearsonHash(salt[3], chunk3)]++
-
-		chunk3[1] = chunk[1]
-		buckets[pearsonHash(salt[4], chunk3)]++
-
-		chunk3[1] = chunk[3]
-		buckets[pearsonHash(salt[5], chunk3)]++
-
-		copy(chunk[1:], chunk[0:4])
-		chunk[0], err = r.ReadByte()
+		state.process()
+		state.chunk[0], err = r.ReadByte()
 		if err != nil {
 			if err != io.EOF {
 				return [numBuckets]uint{}, 0, 0, err
 			}
 			break
 		}
-		fileSize++
+		state.fileSize++
 	}
-	return buckets, checksum, fileSize, nil
+	return state.buckets, state.checksum, state.fileSize, nil
 }
 
 // hashCalculate calculate TLSH

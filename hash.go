@@ -4,17 +4,6 @@ import (
 	"hash"
 )
 
-var salt = [6]byte{2, 3, 5, 7, 11, 13}
-
-type chunkState struct {
-	buckets    [numBuckets]uint
-	chunk      [windowLength]byte
-	chunkSlice []byte
-	fileSize   int
-	checksum   byte
-	chunk3     *[3]byte
-}
-
 var _ hash.Hash = &TLSH{}
 
 func (t *TLSH) Reset() {
@@ -54,33 +43,6 @@ func (t *TLSH) Sum(b []byte) []byte {
 	return t.Binary()
 }
 
-func (s *chunkState) process() {
-	s.chunk3[0] = s.chunk[0]
-	s.chunk3[1] = s.chunk[1]
-	s.chunk3[2] = s.checksum
-	s.checksum = pearsonHash(0, s.chunk3)
-
-	s.chunk3[2] = s.chunk[2]
-	s.buckets[pearsonHash(salt[0], s.chunk3)]++
-
-	s.chunk3[2] = s.chunk[3]
-	s.buckets[pearsonHash(salt[1], s.chunk3)]++
-
-	s.chunk3[1] = s.chunk[2]
-	s.buckets[pearsonHash(salt[2], s.chunk3)]++
-
-	s.chunk3[2] = s.chunk[4]
-	s.buckets[pearsonHash(salt[3], s.chunk3)]++
-
-	s.chunk3[1] = s.chunk[1]
-	s.buckets[pearsonHash(salt[4], s.chunk3)]++
-
-	s.chunk3[1] = s.chunk[3]
-	s.buckets[pearsonHash(salt[5], s.chunk3)]++
-
-	copy(s.chunk[1:], s.chunk[0:4])
-}
-
 func (t *TLSH) Write(p []byte) (int, error) {
 	t.state.fileSize += len(p)
 	if len(t.state.chunkSlice) < windowLength {
@@ -97,6 +59,7 @@ func (t *TLSH) Write(p []byte) (int, error) {
 			t.state.process()
 		}
 	}
+
 	for _, b := range p {
 		t.state.chunk[0] = b
 		t.state.process()
