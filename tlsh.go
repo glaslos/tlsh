@@ -335,15 +335,27 @@ func fillBuckets(r FuzzyReader) ([numBuckets]uint, byte, int, error) {
 func hashCalculate(r FuzzyReader) (*TLSH, error) {
 	buckets, checksum, fileSize, err := fillBuckets(r)
 	if err != nil {
-		return &TLSH{}, err
+        return &TLSH{}, err
 	}
     if fileSize < 50 {
-        return &TLSH{}, errors.New("less than 50 bytes")
+        return &TLSH{
+            state: chunkState{
+                buckets:  buckets,
+                fileSize: fileSize,
+                checksum: checksum,
+            },
+        }, errors.New("less than 50 bytes")
     }
 
 	q1, q2, q3 := quartilePoints(buckets)
     if q3 == 0 {
-        return &TLSH{}, errors.New("q3 is zero")
+        return &TLSH{
+            state: chunkState{
+                buckets:  buckets,
+                fileSize: fileSize,
+                checksum: checksum,
+            },
+        }, errors.New("q3 is zero")
     }
 	q1Ratio := byte(float32(q1)*100/float32(q3)) % 16
 	q2Ratio := byte(float32(q2)*100/float32(q3)) % 16
@@ -371,7 +383,7 @@ type FuzzyReader interface {
 func HashReader(r FuzzyReader) (*TLSH, error) {
 	t, err := hashCalculate(r)
 	if err != nil {
-		return &TLSH{}, err
+        return &TLSH{ state : t.state }, err
 	}
 	return t, err
 }
