@@ -33,8 +33,8 @@ func TestHashWrite(t *testing.T) {
 
 	// hash from read
 	h2, err := HashBytes([]byte("1234111111111"))
-	if err != nil {
-		t.Error(err)
+	if err == nil {
+		t.Error("Missing error of less than 50 bytes")
 	}
 	t.Logf("checksum h2: %d, %x", h2.state.checksum, h2.checksum)
 	t.Log(fmt.Sprintf("h2: %x", h2.Binary()))
@@ -47,6 +47,30 @@ func TestHashWrite(t *testing.T) {
 		t.Errorf("checksum mismatch: %x != %x", h1.checksum, h2.checksum)
 	}
 	diff := h1.Diff(h2)
+	if diff != 0 {
+		t.Errorf("hashes differ by: %d", diff)
+	}
+
+    h1.Write([]byte("1234567890"))
+    h1.Write([]byte("1234567890"))
+    h1.Write([]byte("1234567890"))
+    h1.Write([]byte("1234567890"))
+	t.Log(fmt.Sprintf("h1: %x", h1.Sum(nil)))
+	t.Logf("checksum h1: %d, %x", h1.state.checksum, h1.checksum)
+    s := "1234111111111" + "1234567890" + "1234567890" + "1234567890" + "1234567890"
+	h3, err := HashBytes([]byte(s))
+	if err != nil {
+		t.Error(err)
+	}
+	t.Logf("checksum h3: %d, %x", h3.state.checksum, h3.checksum)
+	t.Log(fmt.Sprintf("h3: %x", h3.Binary()))
+	if h1.state.fileSize != h3.state.fileSize {
+		t.Errorf("file size mismatch: %d != %d", h1.state.fileSize, h3.state.fileSize)
+	}
+	if h1.checksum != h3.checksum {
+		t.Errorf("checksum mismatch: %x != %x", h1.checksum, h3.checksum)
+	}
+	diff = h1.Diff(h3)
 	if diff != 0 {
 		t.Errorf("hashes differ by: %d", diff)
 	}
