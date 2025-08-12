@@ -2,7 +2,7 @@ package tlsh
 
 import (
 	"bufio"
-	"io/ioutil"
+	"io"
 	"os"
 	"testing"
 )
@@ -64,7 +64,7 @@ func TestHashBytes(t *testing.T) {
 		}
 		defer f.Close()
 
-		bytes, _ := ioutil.ReadAll(f)
+		bytes, _ := io.ReadAll(f)
 		if out, _ := HashBytes(bytes); out.String() != tc.hash {
 			t.Errorf("\nfilename: %s\n%s\n%s - doesn't match real hash\n", tc.filename, tc.hash, out)
 		}
