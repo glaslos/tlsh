@@ -33,6 +33,13 @@ func (t *TLSH) Size() int {
 
 func (t *TLSH) Sum(b []byte) []byte {
 	q1, q2, q3 := quartilePoints(t.state.buckets)
+	if q3 == 0 || t.state.fileSize < 50 {
+		*t = TLSH{
+			state: t.state,
+		}
+		// Return a zero hash directly without modifying the receiver
+		return make([]byte, codeSize)
+	}
 	q1Ratio := byte(float32(q1)*100/float32(q3)) % 16
 	q2Ratio := byte(float32(q2)*100/float32(q3)) % 16
 	qRatio := ((q1Ratio & 0xF) << 4) | (q2Ratio & 0xF)
