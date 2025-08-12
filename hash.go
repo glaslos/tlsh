@@ -37,7 +37,8 @@ func (t *TLSH) Sum(b []byte) []byte {
 		*t = TLSH{
 			state: t.state,
 		}
-		return t.Binary()
+		// Return a zero hash directly without modifying the receiver
+		return make([]byte, codeSize)
 	}
 	q1Ratio := byte(float32(q1)*100/float32(q3)) % 16
 	q2Ratio := byte(float32(q2)*100/float32(q3)) % 16
