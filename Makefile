@@ -1,4 +1,4 @@
-VERSION := v0.2.0
+VERSION := v0.4.0
 NAME := tlsh
 BUILDSTRING := $(shell git log --pretty=format:'%h' -n 1)
 VERSIONSTRING := $(NAME) version $(VERSION)+$(BUILDSTRING)
